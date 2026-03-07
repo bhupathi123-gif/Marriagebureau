@@ -69,6 +69,7 @@ namespace MarriageBureau.ViewModels
         public ICommand DeleteCommand { get; }
         public ICommand ViewPdfCommand { get; }
         public ICommand ClearSearchCommand { get; }
+        public ICommand ImportExcelCommand { get; }
         public List<string> GenderOptions { get; } = new() { "All", "MALE", "FEMALE" };
 
         public BrowseViewModel(MainViewModel mainVm)
@@ -80,8 +81,9 @@ namespace MarriageBureau.ViewModels
                                                  () => SelectedProfile != null);
             DeleteCommand    = new RelayCommand(async () => await DeleteSelectedAsync(),
                                                  () => SelectedProfile != null);
-            ViewPdfCommand   = new RelayCommand(OpenPdf, () => SelectedProfile?.HasPdf == true);
+            ViewPdfCommand     = new RelayCommand(OpenPdf, () => SelectedProfile?.HasPdf == true);
             ClearSearchCommand = new RelayCommand(ClearSearch);
+            ImportExcelCommand = new RelayCommand(() => _mainVm.Navigate(AppPage.ExcelImport));
         }
 
         public async Task LoadAsync()
@@ -90,7 +92,10 @@ namespace MarriageBureau.ViewModels
             try
             {
                 using var ctx = new AppDbContext();
-                var list = await ctx.Biodatas.OrderBy(b => b.Name).ToListAsync();
+                var list = await ctx.Biodatas
+                               .Include(b => b.Photos.OrderBy(p => p.SortOrder))
+                               .OrderBy(b => b.Name)
+                               .ToListAsync();
                 _allProfiles = new ObservableCollection<Biodata>(list);
                 ApplyFilter();
                 OnPropertyChanged(nameof(TotalCount));

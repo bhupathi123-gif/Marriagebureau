@@ -1,33 +1,81 @@
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using MarriageBureau.Data;
 using MarriageBureau.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace MarriageBureau.ViewModels
 {
+    /// <summary>
+    /// Wraps a BiodataPhoto and adds a computed BitmapImage for UI binding.
+    /// </summary>
+    public class PhotoItem : BaseViewModel
+    {
+        private BitmapImage? _image;
+        private bool _isSelected;
+
+        public BiodataPhoto Photo { get; }
+
+        public BitmapImage? Image
+        {
+            get => _image;
+            set => SetProperty(ref _image, value);
+        }
+
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set => SetProperty(ref _isSelected, value);
+        }
+
+        public string FileName => Path.GetFileName(Photo.FilePath);
+
+        public PhotoItem(BiodataPhoto photo)
+        {
+            Photo = photo;
+            LoadImage();
+        }
+
+        private void LoadImage()
+        {
+            if (!Photo.Exists) return;
+            try
+            {
+                var bmp = new BitmapImage();
+                bmp.BeginInit();
+                bmp.UriSource     = new Uri(Photo.FilePath, UriKind.Absolute);
+                bmp.CacheOption   = BitmapCacheOption.OnLoad;
+                bmp.DecodePixelWidth = 400;
+                bmp.EndInit();
+                bmp.Freeze();
+                Image = bmp;
+            }
+            catch { Image = null; }
+        }
+    }
+
     public class AddEditViewModel : BaseViewModel
     {
         private Biodata _biodata;
-        private BitmapImage? _photoPreview;
         private bool _isSaving;
         private bool _isEditMode;
         private string _statusMessage = string.Empty;
 
+        // ── Multi-photo slideshow ────────────────────────────────────
+        private ObservableCollection<PhotoItem> _photos = new();
+        private PhotoItem? _currentPhoto;
+        private int _currentPhotoIndex = -1;
+
         private readonly MainViewModel _mainVm;
 
-        // ─── Bound to Form ────────────────────────────────────────────────
+        // ── Bound to Form ────────────────────────────────────────────
 
         public Biodata Biodata
         {
             get => _biodata;
             set => SetProperty(ref _biodata, value);
-        }
-
-        public BitmapImage? PhotoPreview
-        {
-            get => _photoPreview;
-            set => SetProperty(ref _photoPreview, value);
         }
 
         public bool IsSaving
@@ -53,19 +101,65 @@ namespace MarriageBureau.ViewModels
         public string? PdfFileName => Path.GetFileName(Biodata.PdfPath);
         public bool HasPdf => Biodata.HasPdf;
 
-        public List<string> GenderOptions { get; } = new() { "MALE", "FEMALE" };
+        // ── Photos ───────────────────────────────────────────────────
+
+        public ObservableCollection<PhotoItem> Photos
+        {
+            get => _photos;
+            set => SetProperty(ref _photos, value);
+        }
+
+        public PhotoItem? CurrentPhoto
+        {
+            get => _currentPhoto;
+            set
+            {
+                if (_currentPhoto != null) _currentPhoto.IsSelected = false;
+                SetProperty(ref _currentPhoto, value);
+                if (_currentPhoto != null) _currentPhoto.IsSelected = true;
+                OnPropertyChanged(nameof(HasPhotos));
+                OnPropertyChanged(nameof(PhotoCounterText));
+                OnPropertyChanged(nameof(CanGoPrev));
+                OnPropertyChanged(nameof(CanGoNext));
+            }
+        }
+
+        public int CurrentPhotoIndex
+        {
+            get => _currentPhotoIndex;
+            set
+            {
+                SetProperty(ref _currentPhotoIndex, value);
+                if (_currentPhotoIndex >= 0 && _currentPhotoIndex < Photos.Count)
+                    CurrentPhoto = Photos[_currentPhotoIndex];
+                OnPropertyChanged(nameof(PhotoCounterText));
+                OnPropertyChanged(nameof(CanGoPrev));
+                OnPropertyChanged(nameof(CanGoNext));
+            }
+        }
+
+        public bool HasPhotos    => Photos.Count > 0;
+        public bool CanGoPrev    => Photos.Count > 1 && _currentPhotoIndex > 0;
+        public bool CanGoNext    => Photos.Count > 1 && _currentPhotoIndex < Photos.Count - 1;
+        public string PhotoCounterText => Photos.Count == 0 ? "No photos"
+                                        : $"Photo {_currentPhotoIndex + 1} of {Photos.Count}";
+
+        public List<string> GenderOptions    { get; } = new() { "MALE", "FEMALE" };
         public List<string> ComplexionOptions { get; } = new() { "FAIR", "VERY FAIR", "WHITE", "MEDIUM", "RED", "DARK", "WHEATISH" };
-        public List<string> RasiOptions { get; } = new() { "MESHA", "VRUSHABA", "MIDHUNA", "KARKATAKA", "SIMHA", "KANYA", "TULA", "VRUCHIKA", "DHANU", "MAKARA", "KUMBHA", "MEENA" };
+        public List<string> RasiOptions      { get; } = new() { "MESHA", "VRUSHABA", "MIDHUNA", "KARKATAKA", "SIMHA", "KANYA", "TULA", "VRUCHIKA", "DHANU", "MAKARA", "KUMBHA", "MEENA" };
 
-        // ─── Commands ─────────────────────────────────────────────────────
+        // ── Commands ─────────────────────────────────────────────────
 
-        public ICommand SaveCommand { get; }
-        public ICommand CancelCommand { get; }
-        public ICommand UploadPhotoCommand { get; }
+        public ICommand SaveCommand        { get; }
+        public ICommand CancelCommand      { get; }
+        public ICommand AddPhotosCommand   { get; }
         public ICommand RemovePhotoCommand { get; }
-        public ICommand UploadPdfCommand { get; }
-        public ICommand RemovePdfCommand { get; }
-        public ICommand ViewPdfCommand { get; }
+        public ICommand SetCoverPhotoCommand { get; }
+        public ICommand PrevPhotoCommand   { get; }
+        public ICommand NextPhotoCommand   { get; }
+        public ICommand UploadPdfCommand   { get; }
+        public ICommand RemovePdfCommand   { get; }
+        public ICommand ViewPdfCommand     { get; }
 
         public AddEditViewModel(MainViewModel mainVm, Biodata? existingBiodata = null)
         {
@@ -75,68 +169,147 @@ namespace MarriageBureau.ViewModels
                 : new Biodata();
 
             IsEditMode = existingBiodata != null;
-            LoadPhotoPreview();
 
-            SaveCommand        = new RelayCommand(async () => await SaveAsync(), () => !IsSaving);
-            CancelCommand      = new RelayCommand(() => _mainVm.Navigate(AppPage.Browse));
-            UploadPhotoCommand = new RelayCommand(UploadPhoto);
-            RemovePhotoCommand = new RelayCommand(RemovePhoto, () => !string.IsNullOrWhiteSpace(Biodata.PhotoPath));
-            UploadPdfCommand   = new RelayCommand(UploadPdf);
-            RemovePdfCommand   = new RelayCommand(RemovePdf, () => !string.IsNullOrWhiteSpace(Biodata.PdfPath));
-            ViewPdfCommand     = new RelayCommand(OpenPdf, () => Biodata.HasPdf);
+            // Load existing photos if editing
+            if (existingBiodata != null)
+                LoadExistingPhotos(existingBiodata.Id);
+
+            SaveCommand          = new RelayCommand(async () => await SaveAsync(), () => !IsSaving);
+            CancelCommand        = new RelayCommand(() => _mainVm.Navigate(AppPage.Browse));
+            AddPhotosCommand     = new RelayCommand(AddPhotos);
+            RemovePhotoCommand   = new RelayCommand(RemoveCurrentPhoto, () => CurrentPhoto != null);
+            SetCoverPhotoCommand = new RelayCommand(SetAsCover, () => CurrentPhoto != null);
+            PrevPhotoCommand     = new RelayCommand(PrevPhoto, () => CanGoPrev);
+            NextPhotoCommand     = new RelayCommand(NextPhoto, () => CanGoNext);
+            UploadPdfCommand     = new RelayCommand(UploadPdf);
+            RemovePdfCommand     = new RelayCommand(RemovePdf, () => !string.IsNullOrWhiteSpace(Biodata.PdfPath));
+            ViewPdfCommand       = new RelayCommand(OpenPdf, () => Biodata.HasPdf);
         }
 
-        // ─── Photo ────────────────────────────────────────────────────────
+        // ── Photos ────────────────────────────────────────────────────
 
-        private void UploadPhoto()
+        private void LoadExistingPhotos(int biodataId)
+        {
+            try
+            {
+                using var ctx = new AppDbContext();
+                var photos = ctx.BiodataPhotos
+                               .Where(p => p.BiodataId == biodataId)
+                               .OrderBy(p => p.SortOrder)
+                               .ToList();
+
+                foreach (var p in photos)
+                    Photos.Add(new PhotoItem(p));
+
+                if (Photos.Count > 0)
+                    CurrentPhotoIndex = 0;
+
+                // Back-compat: also load legacy single PhotoPath
+                if (Photos.Count == 0 && !string.IsNullOrWhiteSpace(_biodata.PhotoPath)
+                    && File.Exists(_biodata.PhotoPath))
+                {
+                    var legacyPhoto = new BiodataPhoto
+                    {
+                        BiodataId = biodataId,
+                        FilePath  = _biodata.PhotoPath,
+                        SortOrder = 0
+                    };
+                    Photos.Add(new PhotoItem(legacyPhoto));
+                    CurrentPhotoIndex = 0;
+                }
+
+                OnPropertyChanged(nameof(HasPhotos));
+                OnPropertyChanged(nameof(PhotoCounterText));
+            }
+            catch { }
+        }
+
+        private void AddPhotos()
         {
             var dlg = new Microsoft.Win32.OpenFileDialog
             {
-                Title  = "Select Profile Photo",
-                Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.gif;*.webp",
-                Multiselect = false
+                Title      = "Add Profile Photos",
+                Filter     = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.gif;*.webp",
+                Multiselect = true
             };
             if (dlg.ShowDialog() != true) return;
 
-            // Copy to app data folder
             var destDir = GetFilesDirectory("Photos");
-            var destFile = Path.Combine(destDir, $"{Guid.NewGuid()}{Path.GetExtension(dlg.FileName)}");
-            File.Copy(dlg.FileName, destFile, overwrite: true);
 
-            Biodata.PhotoPath = destFile;
-            OnPropertyChanged(nameof(Biodata));
-            LoadPhotoPreview();
-        }
-
-        private void RemovePhoto()
-        {
-            Biodata.PhotoPath = null;
-            PhotoPreview = null;
-            OnPropertyChanged(nameof(Biodata));
-        }
-
-        private void LoadPhotoPreview()
-        {
-            if (!string.IsNullOrWhiteSpace(Biodata.PhotoPath) && File.Exists(Biodata.PhotoPath))
+            foreach (var srcFile in dlg.FileNames)
             {
                 try
                 {
-                    var bmp = new BitmapImage();
-                    bmp.BeginInit();
-                    bmp.UriSource = new Uri(Biodata.PhotoPath, UriKind.Absolute);
-                    bmp.CacheOption = BitmapCacheOption.OnLoad;
-                    bmp.DecodePixelWidth = 300;
-                    bmp.EndInit();
-                    bmp.Freeze();
-                    PhotoPreview = bmp;
-                    return;
+                    var destFile = Path.Combine(destDir,
+                        $"{Guid.NewGuid()}{Path.GetExtension(srcFile)}");
+                    File.Copy(srcFile, destFile, overwrite: true);
+
+                    var photo = new BiodataPhoto
+                    {
+                        BiodataId = Biodata.Id,   // 0 for new records; fixed on save
+                        FilePath  = destFile,
+                        SortOrder = Photos.Count
+                    };
+                    var item = new PhotoItem(photo);
+                    Photos.Add(item);
                 }
-                catch { }
+                catch { /* skip bad files */ }
             }
-            PhotoPreview = null;
+
+            if (Photos.Count > 0 && CurrentPhoto == null)
+                CurrentPhotoIndex = 0;
+
+            OnPropertyChanged(nameof(HasPhotos));
+            OnPropertyChanged(nameof(PhotoCounterText));
+            CommandManager.InvalidateRequerySuggested();
         }
 
-        // ─── PDF ──────────────────────────────────────────────────────────
+        private void RemoveCurrentPhoto()
+        {
+            if (CurrentPhoto == null) return;
+            int idx = Photos.IndexOf(CurrentPhoto);
+            Photos.RemoveAt(idx);
+
+            if (Photos.Count == 0)
+            {
+                CurrentPhoto = null;
+                _currentPhotoIndex = -1;
+            }
+            else
+            {
+                CurrentPhotoIndex = Math.Min(idx, Photos.Count - 1);
+            }
+            OnPropertyChanged(nameof(HasPhotos));
+            OnPropertyChanged(nameof(PhotoCounterText));
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+        private void SetAsCover()
+        {
+            if (CurrentPhoto == null) return;
+            int idx = Photos.IndexOf(CurrentPhoto);
+            if (idx == 0) return;
+
+            // Move to front
+            Photos.Move(idx, 0);
+            for (int i = 0; i < Photos.Count; i++)
+                Photos[i].Photo.SortOrder = i;
+
+            CurrentPhotoIndex = 0;
+            OnPropertyChanged(nameof(PhotoCounterText));
+        }
+
+        private void PrevPhoto()
+        {
+            if (CanGoPrev) CurrentPhotoIndex--;
+        }
+
+        private void NextPhoto()
+        {
+            if (CanGoNext) CurrentPhotoIndex++;
+        }
+
+        // ── PDF ──────────────────────────────────────────────────────
 
         private void UploadPdf()
         {
@@ -172,8 +345,9 @@ namespace MarriageBureau.ViewModels
             {
                 try
                 {
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Biodata.PdfPath!)
-                    { UseShellExecute = true });
+                    System.Diagnostics.Process.Start(
+                        new System.Diagnostics.ProcessStartInfo(Biodata.PdfPath!)
+                        { UseShellExecute = true });
                 }
                 catch (Exception ex)
                 {
@@ -182,7 +356,7 @@ namespace MarriageBureau.ViewModels
             }
         }
 
-        // ─── Save ─────────────────────────────────────────────────────────
+        // ── Save ─────────────────────────────────────────────────────
 
         private async Task SaveAsync()
         {
@@ -193,25 +367,45 @@ namespace MarriageBureau.ViewModels
             }
 
             IsSaving = true;
-            StatusMessage = "Saving...";
+            StatusMessage = "Saving…";
             try
             {
                 using var ctx = new AppDbContext();
                 Biodata.UpdatedAt = DateTime.Now;
 
+                // Set cover photo path for backward compat
+                if (Photos.Count > 0 && Photos[0].Photo.Exists)
+                    Biodata.PhotoPath = Photos[0].Photo.FilePath;
+
                 if (IsEditMode)
                 {
                     ctx.Biodatas.Update(Biodata);
+                    await ctx.SaveChangesAsync();
+
+                    // Delete old photos for this profile, then re-insert current list
+                    var oldPhotos = await ctx.BiodataPhotos
+                                             .Where(p => p.BiodataId == Biodata.Id)
+                                             .ToListAsync();
+                    ctx.BiodataPhotos.RemoveRange(oldPhotos);
                 }
                 else
                 {
                     Biodata.CreatedAt = DateTime.Now;
                     ctx.Biodatas.Add(Biodata);
+                    await ctx.SaveChangesAsync(); // Get the new Id
                 }
 
+                // Persist photos
+                for (int i = 0; i < Photos.Count; i++)
+                {
+                    var p = Photos[i].Photo;
+                    p.BiodataId = Biodata.Id;
+                    p.SortOrder = i;
+                    ctx.BiodataPhotos.Add(p);
+                }
                 await ctx.SaveChangesAsync();
-                StatusMessage = "Saved successfully!";
 
+                StatusMessage = "Saved successfully!";
                 await Task.Delay(800);
                 _mainVm.Navigate(AppPage.Browse);
             }
@@ -225,7 +419,7 @@ namespace MarriageBureau.ViewModels
             }
         }
 
-        // ─── Helpers ──────────────────────────────────────────────────────
+        // ── Helpers ──────────────────────────────────────────────────
 
         private static string GetFilesDirectory(string subfolder)
         {
@@ -238,54 +432,54 @@ namespace MarriageBureau.ViewModels
 
         private static Biodata CopyBiodata(Biodata src) => new()
         {
-            Id                    = src.Id,
-            Name                  = src.Name,
-            Caste                 = src.Caste,
-            Gender                = src.Gender,
-            DateOfBirth           = src.DateOfBirth,
-            TimeOfBirth           = src.TimeOfBirth,
-            AmPm                  = src.AmPm,
-            PlaceOfBirth          = src.PlaceOfBirth,
-            Height                = src.Height,
-            Complexion            = src.Complexion,
-            BirthStar             = src.BirthStar,
-            Padam                 = src.Padam,
-            Raasi                 = src.Raasi,
-            Religion              = src.Religion,
-            PaternalGotram        = src.PaternalGotram,
-            MaternalGotram        = src.MaternalGotram,
-            Qualification         = src.Qualification,
-            Designation           = src.Designation,
-            CompanyAddress        = src.CompanyAddress,
-            FatherName            = src.FatherName,
-            FatherOccupation      = src.FatherOccupation,
-            MotherName            = src.MotherName,
-            MotherOccupation      = src.MotherOccupation,
-            NoOfSiblings          = src.NoOfSiblings,
-            BrotherCount          = src.BrotherCount,
-            BrotherOccupation     = src.BrotherOccupation,
-            SisterCount           = src.SisterCount,
-            SisterOccupation      = src.SisterOccupation,
-            BrotherInLaw          = src.BrotherInLaw,
-            GrandFatherName       = src.GrandFatherName,
-            ElderFather           = src.ElderFather,
-            ElderFatherPhone      = src.ElderFatherPhone,
-            DoorNumber            = src.DoorNumber,
-            AddressLine           = src.AddressLine,
-            TownVillage           = src.TownVillage,
-            District              = src.District,
-            State                 = src.State,
-            Country               = src.Country,
-            PinCode               = src.PinCode,
-            LivingIn              = src.LivingIn,
-            Phone1                = src.Phone1,
-            Phone2                = src.Phone2,
-            References            = src.References,
+            Id                      = src.Id,
+            Name                    = src.Name,
+            Caste                   = src.Caste,
+            Gender                  = src.Gender,
+            DateOfBirth             = src.DateOfBirth,
+            TimeOfBirth             = src.TimeOfBirth,
+            AmPm                    = src.AmPm,
+            PlaceOfBirth            = src.PlaceOfBirth,
+            Height                  = src.Height,
+            Complexion              = src.Complexion,
+            BirthStar               = src.BirthStar,
+            Padam                   = src.Padam,
+            Raasi                   = src.Raasi,
+            Religion                = src.Religion,
+            PaternalGotram          = src.PaternalGotram,
+            MaternalGotram          = src.MaternalGotram,
+            Qualification           = src.Qualification,
+            Designation             = src.Designation,
+            CompanyAddress          = src.CompanyAddress,
+            FatherName              = src.FatherName,
+            FatherOccupation        = src.FatherOccupation,
+            MotherName              = src.MotherName,
+            MotherOccupation        = src.MotherOccupation,
+            NoOfSiblings            = src.NoOfSiblings,
+            BrotherCount            = src.BrotherCount,
+            BrotherOccupation       = src.BrotherOccupation,
+            SisterCount             = src.SisterCount,
+            SisterOccupation        = src.SisterOccupation,
+            BrotherInLaw            = src.BrotherInLaw,
+            GrandFatherName         = src.GrandFatherName,
+            ElderFather             = src.ElderFather,
+            ElderFatherPhone        = src.ElderFatherPhone,
+            DoorNumber              = src.DoorNumber,
+            AddressLine             = src.AddressLine,
+            TownVillage             = src.TownVillage,
+            District                = src.District,
+            State                   = src.State,
+            Country                 = src.Country,
+            PinCode                 = src.PinCode,
+            LivingIn                = src.LivingIn,
+            Phone1                  = src.Phone1,
+            Phone2                  = src.Phone2,
+            References              = src.References,
             ExpectationsFromPartner = src.ExpectationsFromPartner,
-            PhotoPath             = src.PhotoPath,
-            PdfPath               = src.PdfPath,
-            CreatedAt             = src.CreatedAt,
-            UpdatedAt             = src.UpdatedAt,
+            PhotoPath               = src.PhotoPath,
+            PdfPath                 = src.PdfPath,
+            CreatedAt               = src.CreatedAt,
+            UpdatedAt               = src.UpdatedAt,
         };
     }
 }

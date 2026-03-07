@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using MarriageBureau.Data;
 using MarriageBureau.Models;
 using MarriageBureau.ViewModels;
 
@@ -14,6 +15,10 @@ namespace MarriageBureau.Views
         public MainWindow()
         {
             InitializeComponent();
+
+            // Ensure database + tables exist (including new BiodataPhotos table)
+            AppDbContext.EnsureCreated();
+
             _vm = new MainViewModel(this);
             DataContext = _vm;
 
@@ -46,6 +51,12 @@ namespace MarriageBureau.Views
             _slideshowView = new SlideshowView(_vm);
             MainFrame.Content = _slideshowView;
             _ = _slideshowView.ViewModel.LoadAsync();
+        }
+
+        public void LoadExcelImport()
+        {
+            var view = new ExcelImportView(_vm);
+            MainFrame.Content = view;
         }
     }
 }

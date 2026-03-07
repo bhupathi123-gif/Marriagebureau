@@ -124,6 +124,16 @@
                         <TextBlock Text="View Slideshow"/>
                     </StackPanel>
                 </Button>
+
+                <Button Command="{Binding ImportExcelCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Margin="0,0,12,8"
+                        Foreground="#2E7D32" BorderBrush="#2E7D32">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="FileExcel" Margin="0,0,8,0"/>
+                        <TextBlock Text="Import from Excel"/>
+                    </StackPanel>
+                </Button>
             </WrapPanel>
 
             <!-- Recent Profiles -->
