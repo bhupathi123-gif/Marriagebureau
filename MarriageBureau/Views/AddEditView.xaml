@@ -1,0 +1,623 @@
+<Page x:Class="MarriageBureau.Views.AddEditView"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+      xmlns:converters="clr-namespace:MarriageBureau.Converters"
+      Background="{DynamicResource MaterialDesignPaper}"
+      Title="Add / Edit Biodata">
+
+    <Page.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <converters:NullToVisibilityConverter x:Key="NullToVis"/>
+        <Style x:Key="FormLabel" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+            <Setter Property="Foreground" Value="#5E35B1"/>
+        </Style>
+        <Style x:Key="SectionHeader" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Foreground" Value="#4A148C"/>
+            <Setter Property="Margin" Value="0,20,0,10"/>
+        </Style>
+    </Page.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ═══ Header Bar ═══════════════════════════════════════════ -->
+        <Border Grid.Row="0" Background="#4A148C" Padding="20,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="{Binding WindowTitle}" FontSize="22" FontWeight="Bold"
+                               Foreground="White"/>
+                    <TextBlock Text="Fill in all available details for the biodata profile"
+                               FontSize="12" Foreground="#CE93D8"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Command="{Binding CancelCommand}"
+                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Foreground="White" BorderBrush="White" Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ArrowLeft" Margin="0,0,6,0"/>
+                            <TextBlock Text="Back"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding SaveCommand}"
+                            Style="{StaticResource MaterialDesignRaisedButton}"
+                            Background="#7B1FA2">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ContentSave" Margin="0,0,6,0"/>
+                            <TextBlock Text="Save Profile"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ═══ Form Content ═════════════════════════════════════════ -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <Grid Margin="24,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="280"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: Main Form -->
+                <StackPanel Grid.Column="0" Margin="0,0,20,0">
+
+                    <!-- ── Personal Information ─────────────────────── -->
+                    <TextBlock Text="👤  Personal Information" Style="{StaticResource SectionHeader}"/>
+                    <Separator Margin="0,0,0,14"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="140"/>
+                            <ColumnDefinition Width="140"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="Full Name *" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.Name, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Enter full name"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                            <TextBlock Text="Gender *" Style="{StaticResource FormLabel}"/>
+                            <ComboBox ItemsSource="{Binding GenderOptions}"
+                                      SelectedItem="{Binding Biodata.Gender}"
+                                      Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Caste" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.Caste, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="e.g. ARYA VYSYA"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="100"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="Date of Birth" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.DateOfBirth, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="DD MM YYYY"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                            <TextBlock Text="Time of Birth" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.TimeOfBirth, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="HH:MM"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="AM / PM" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.AmPm, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="AM/PM"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="Place of Birth" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.PlaceOfBirth, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="City / Town"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                            <TextBlock Text="Height" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.Height, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="e.g. 5'4&quot;"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Complexion" Style="{StaticResource FormLabel}"/>
+                            <ComboBox ItemsSource="{Binding ComplexionOptions}"
+                                      Text="{Binding Biodata.Complexion}"
+                                      IsEditable="True"
+                                      Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- ── Horoscope ──────────────────────────────── -->
+                    <TextBlock Text="🪐  Horoscope Details" Style="{StaticResource SectionHeader}"/>
+                    <Separator Margin="0,0,0,14"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="Birth Star (Nakshatra)" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.BirthStar, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="e.g. KRUTHIKA"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                            <TextBlock Text="Padam" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.Padam, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="1 / 2 / 3 / 4"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Raasi" Style="{StaticResource FormLabel}"/>
+                            <ComboBox ItemsSource="{Binding RasiOptions}"
+                                      Text="{Binding Biodata.Raasi}"
+                                      IsEditable="True"
+                                      Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="Religion" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.Religion, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="e.g. HINDU"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                            <TextBlock Text="Paternal Gotram" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.PaternalGotram, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Paternal Gotram"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Maternal Gotram" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.MaternalGotram, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Maternal Gotram"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- ── Education & Career ─────────────────────── -->
+                    <TextBlock Text="🎓  Education &amp; Career" Style="{StaticResource SectionHeader}"/>
+                    <Separator Margin="0,0,0,14"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="Qualification" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.Qualification, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="e.g. B.TECH (IT)"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Designation / Job Title" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.Designation, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="e.g. Software Engineer"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Margin="0,12,0,0">
+                        <TextBlock Text="Company Name &amp; Address" Style="{StaticResource FormLabel}"/>
+                        <TextBox Text="{Binding Biodata.CompanyAddress, UpdateSourceTrigger=PropertyChanged}"
+                                 materialDesign:HintAssist.Hint="Company name and full address"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                    </StackPanel>
+
+                    <!-- ── Family Information ─────────────────────── -->
+                    <TextBlock Text="👨‍👩‍👧  Family Information" Style="{StaticResource SectionHeader}"/>
+                    <Separator Margin="0,0,0,14"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="Father's Name" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.FatherName, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Father's full name"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Father's Occupation" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.FatherOccupation, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="e.g. Business, Govt Teacher"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="Mother's Name" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.MotherName, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Mother's full name"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Mother's Occupation" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.MotherOccupation, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="e.g. House Wife"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="80"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="Brothers" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.BrotherCount, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="#"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                            <TextBlock Text="Brother Occupation/Education" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.BrotherOccupation, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Occupation or education"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Margin="0,0,12,0">
+                            <TextBlock Text="Sisters" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.SisterCount, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="#"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="3" Margin="0,0,12,0">
+                            <TextBlock Text="Sister Occupation" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.SisterOccupation, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Occupation or education"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="4">
+                            <TextBlock Text="Brother-in-Law" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.BrotherInLaw, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Name"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="Grand Father Name" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.GrandFatherName, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Grand father's name"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                            <TextBlock Text="Elder Father (Uncle)" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.ElderFather, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Elder father's name"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Elder Father Phone" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.ElderFatherPhone, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Phone number"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- ── Address ─────────────────────────────────── -->
+                    <TextBlock Text="🏠  Address" Style="{StaticResource SectionHeader}"/>
+                    <Separator Margin="0,0,0,14"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="Door No." Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.DoorNumber, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="D. No."
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Street / Address Line" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.AddressLine, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Street, landmark"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="100"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="Town / Village" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.TownVillage, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Town or village"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                            <TextBlock Text="District" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.District, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="District"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Margin="0,0,12,0">
+                            <TextBlock Text="State" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.State, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="State"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="3" Margin="0,0,12,0">
+                            <TextBlock Text="Country" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.Country, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Country"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="4">
+                            <TextBlock Text="PIN Code" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.PinCode, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="PIN"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Margin="0,12,0,0">
+                        <TextBlock Text="Living In (Current City / Country)" Style="{StaticResource FormLabel}"/>
+                        <TextBox Text="{Binding Biodata.LivingIn, UpdateSourceTrigger=PropertyChanged}"
+                                 materialDesign:HintAssist.Hint="e.g. Hyderabad / USA / Dubai"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                    </StackPanel>
+
+                    <!-- ── Contact ─────────────────────────────────── -->
+                    <TextBlock Text="📞  Contact Information" Style="{StaticResource SectionHeader}"/>
+                    <Separator Margin="0,0,0,14"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="Phone Number 1" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.Phone1, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Primary phone number"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Phone Number 2" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.Phone2, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Alternate phone number"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Margin="0,12,0,0">
+                        <TextBlock Text="References" Style="{StaticResource FormLabel}"/>
+                        <TextBox Text="{Binding Biodata.References, UpdateSourceTrigger=PropertyChanged}"
+                                 materialDesign:HintAssist.Hint="Reference name and phone"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 AcceptsReturn="True" MinHeight="60" TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <!-- ── Partner Expectations ───────────────────── -->
+                    <TextBlock Text="💝  Expectations from Partner" Style="{StaticResource SectionHeader}"/>
+                    <Separator Margin="0,0,0,14"/>
+
+                    <TextBox Text="{Binding Biodata.ExpectationsFromPartner, UpdateSourceTrigger=PropertyChanged}"
+                             materialDesign:HintAssist.Hint="Describe expectations from life partner (location, education, occupation, etc.)"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             AcceptsReturn="True" MinHeight="80" TextWrapping="Wrap"
+                             Margin="0,0,0,24"/>
+
+                </StackPanel>
+
+                <!-- Right: Photo + PDF Panel -->
+                <StackPanel Grid.Column="1">
+
+                    <!-- Photo Upload Card -->
+                    <materialDesign:Card Padding="16" UniformCornerRadius="10" Margin="0,0,0,16"
+                                         materialDesign:ElevationAssist.Elevation="Dp3">
+                        <StackPanel>
+                            <TextBlock Text="📸  Profile Photo" FontWeight="Bold" FontSize="14"
+                                       Foreground="#4A148C" Margin="0,0,0,12"/>
+
+                            <!-- Photo Preview -->
+                            <Border Width="200" Height="220" CornerRadius="10"
+                                    ClipToBounds="True" Background="#EDE7F6"
+                                    HorizontalAlignment="Center" Margin="0,0,0,12">
+                                <Grid>
+                                    <!-- Placeholder when no photo -->
+                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                        <materialDesign:PackIcon Kind="AccountCircle"
+                                                                 Width="80" Height="80"
+                                                                 Foreground="#9E9E9E"/>
+                                        <TextBlock Text="No Photo" Foreground="#9E9E9E"
+                                                   HorizontalAlignment="Center"/>
+                                    </StackPanel>
+
+                                    <!-- Actual photo when available -->
+                                    <Image Source="{Binding PhotoPreview}"
+                                           Stretch="UniformToFill">
+                                        <Image.Style>
+                                            <Style TargetType="Image">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding PhotoPreview, Converter={StaticResource NullToVis}}"
+                                                                 Value="Visible">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Image.Style>
+                                    </Image>
+                                </Grid>
+                            </Border>
+
+                            <!-- Photo Action Buttons -->
+                            <Button Command="{Binding UploadPhotoCommand}"
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Background="#4A148C"
+                                    HorizontalAlignment="Stretch" Margin="0,0,0,6">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Upload" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Upload Photo"/>
+                                </StackPanel>
+                            </Button>
+
+                            <Button Command="{Binding RemovePhotoCommand}"
+                                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                                    Foreground="Gray" BorderBrush="Gray"
+                                    HorizontalAlignment="Stretch">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="ImageRemove" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Remove Photo"/>
+                                </StackPanel>
+                            </Button>
+
+                            <TextBlock Text="Supports JPG, PNG, BMP"
+                                       FontSize="10" Foreground="Gray"
+                                       HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <!-- PDF Upload Card -->
+                    <materialDesign:Card Padding="16" UniformCornerRadius="10"
+                                         materialDesign:ElevationAssist.Elevation="Dp3">
+                        <StackPanel>
+                            <TextBlock Text="📄  Biodata PDF" FontWeight="Bold" FontSize="14"
+                                       Foreground="#4A148C" Margin="0,0,0,12"/>
+
+                            <!-- PDF Info -->
+                            <Border Background="#FFEBEE" CornerRadius="8" Padding="12"
+                                    Margin="0,0,0,12">
+                                <StackPanel>
+                                    <materialDesign:PackIcon Kind="FilePdf"
+                                                             Width="40" Height="40"
+                                                             Foreground="Crimson"
+                                                             HorizontalAlignment="Center"/>
+                                    <TextBlock TextWrapping="Wrap" TextAlignment="Center"
+                                               FontSize="12" Foreground="#C62828"
+                                               Margin="0,6,0,0">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="No PDF uploaded"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasPdf}" Value="True">
+                                                        <Setter Property="Text" Value="{Binding PdfFileName}"/>
+                                                        <Setter Property="Foreground" Value="#2E7D32"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
+
+                            <Button Command="{Binding UploadPdfCommand}"
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Background="Crimson"
+                                    HorizontalAlignment="Stretch" Margin="0,0,0,6">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Upload" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Upload PDF"/>
+                                </StackPanel>
+                            </Button>
+
+                            <Button Command="{Binding ViewPdfCommand}"
+                                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                                    HorizontalAlignment="Stretch" Margin="0,0,0,6">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Eye" Margin="0,0,8,0"/>
+                                    <TextBlock Text="View PDF"/>
+                                </StackPanel>
+                            </Button>
+
+                            <Button Command="{Binding RemovePdfCommand}"
+                                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                                    Foreground="Gray" BorderBrush="Gray"
+                                    HorizontalAlignment="Stretch">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Delete" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Remove PDF"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </materialDesign:Card>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- ═══ Status Bar ════════════════════════════════════════════ -->
+        <Border Grid.Row="2" Background="#F3E5F5" Padding="16,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="{Binding StatusMessage}"
+                           Foreground="#4A148C" FontWeight="SemiBold"
+                           VerticalAlignment="Center"/>
+
+                <ProgressBar Grid.Column="1" IsIndeterminate="True" Width="120" Height="4"
+                             Visibility="{Binding IsSaving, Converter={StaticResource BoolToVis}}"
+                             Style="{StaticResource MaterialDesignLinearProgressBar}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Page>
