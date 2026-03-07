@@ -45,6 +45,15 @@
                         Margin="0,0,8,0" ToolTip="Refresh">
                     <materialDesign:PackIcon Kind="Refresh"/>
                 </Button>
+                <Button Command="{Binding ImportExcelCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Margin="0,0,8,0" ToolTip="Import profiles from Excel file"
+                        Foreground="#2E7D32" BorderBrush="#2E7D32">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="FileExcel" Margin="0,0,8,0"/>
+                        <TextBlock Text="Import Excel"/>
+                    </StackPanel>
+                </Button>
                 <Button Command="{Binding AddNewCommand}"
                         Style="{StaticResource MaterialDesignRaisedButton}"
                         Background="#4A148C">
@@ -140,7 +149,7 @@
                                         <Border.Background>
                                             <SolidColorBrush Color="#EDE7F6"/>
                                         </Border.Background>
-                                        <Image Source="{Binding PhotoPath, Converter={StaticResource PhotoFallback}}"
+                                        <Image Source="{Binding PrimaryPhotoPath, Converter={StaticResource PhotoFallback}}"
                                                Stretch="UniformToFill"/>
                                     </Border>
                                 </DataTemplate>

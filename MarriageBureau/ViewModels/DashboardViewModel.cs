@@ -29,20 +29,22 @@ namespace MarriageBureau.ViewModels
             set => SetProperty(ref _recentProfiles, value);
         }
 
-        public ICommand RefreshCommand  { get; }
-        public ICommand AddNewCommand   { get; }
-        public ICommand BrowseCommand   { get; }
-        public ICommand SlideshowCommand{ get; }
+        public ICommand RefreshCommand   { get; }
+        public ICommand AddNewCommand    { get; }
+        public ICommand BrowseCommand    { get; }
+        public ICommand SlideshowCommand { get; }
+        public ICommand ImportExcelCommand { get; }
 
         private readonly MainViewModel _mainVm;
 
         public DashboardViewModel(MainViewModel mainVm)
         {
-            _mainVm          = mainVm;
-            RefreshCommand   = new RelayCommand(async () => await LoadAsync());
-            AddNewCommand    = new RelayCommand(() => _mainVm.Navigate(AppPage.AddEdit));
-            BrowseCommand    = new RelayCommand(() => _mainVm.Navigate(AppPage.Browse));
-            SlideshowCommand = new RelayCommand(() => _mainVm.Navigate(AppPage.Slideshow));
+            _mainVm            = mainVm;
+            RefreshCommand     = new RelayCommand(async () => await LoadAsync());
+            AddNewCommand      = new RelayCommand(() => _mainVm.Navigate(AppPage.AddEdit));
+            BrowseCommand      = new RelayCommand(() => _mainVm.Navigate(AppPage.Browse));
+            SlideshowCommand   = new RelayCommand(() => _mainVm.Navigate(AppPage.Slideshow));
+            ImportExcelCommand = new RelayCommand(() => _mainVm.Navigate(AppPage.ExcelImport));
         }
 
         public async Task LoadAsync()

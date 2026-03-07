@@ -86,6 +86,17 @@
                         <TextBlock Text="Profile Slideshow" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
+
+                <Separator Background="#7B1FA2" Margin="4,8"/>
+
+                <Button x:Name="BtnImportExcel"
+                        Command="{Binding NavigateExcelImportCommand}"
+                        Style="{StaticResource NavButtonStyle}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="FileExcel" Width="20" Height="20" Margin="0,0,12,0"/>
+                        <TextBlock Text="Import from Excel" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
 
             <!-- Bottom Info -->

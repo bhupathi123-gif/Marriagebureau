@@ -1,6 +1,5 @@
 using System.Windows;
 using MarriageBureau.Data;
-using Microsoft.EntityFrameworkCore;
 
 namespace MarriageBureau
 {
@@ -10,9 +9,8 @@ namespace MarriageBureau
         {
             base.OnStartup(e);
 
-            // Ensure database is created and migrated
-            using var context = new AppDbContext();
-            context.Database.EnsureCreated();
+            // Ensure database is created and all tables exist (including new BiodataPhotos)
+            AppDbContext.EnsureCreated();
         }
     }
 }

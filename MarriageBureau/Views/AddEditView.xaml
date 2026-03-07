@@ -466,72 +466,172 @@
 
                 </StackPanel>
 
-                <!-- Right: Photo + PDF Panel -->
+                <!-- Right: Photo Gallery + PDF Panel -->
                 <StackPanel Grid.Column="1">
 
-                    <!-- Photo Upload Card -->
+                    <!-- ══ Multi-Photo Gallery Card ════════════════ -->
                     <materialDesign:Card Padding="16" UniformCornerRadius="10" Margin="0,0,0,16"
                                          materialDesign:ElevationAssist.Elevation="Dp3">
                         <StackPanel>
-                            <TextBlock Text="📸  Profile Photo" FontWeight="Bold" FontSize="14"
-                                       Foreground="#4A148C" Margin="0,0,0,12"/>
+                            <TextBlock Text="📸  Profile Photos" FontWeight="Bold" FontSize="14"
+                                       Foreground="#4A148C" Margin="0,0,0,4"/>
+                            <TextBlock Text="Add multiple photos — first photo is the cover"
+                                       FontSize="10" Foreground="Gray" Margin="0,0,0,12"/>
 
-                            <!-- Photo Preview -->
-                            <Border Width="200" Height="220" CornerRadius="10"
+                            <!-- Main Photo Viewer -->
+                            <Border Width="240" Height="240" CornerRadius="10"
                                     ClipToBounds="True" Background="#EDE7F6"
-                                    HorizontalAlignment="Center" Margin="0,0,0,12">
+                                    HorizontalAlignment="Center" Margin="0,0,0,8">
                                 <Grid>
-                                    <!-- Placeholder when no photo -->
+                                    <!-- Placeholder -->
                                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                                        <materialDesign:PackIcon Kind="AccountCircle"
-                                                                 Width="80" Height="80"
-                                                                 Foreground="#9E9E9E"/>
-                                        <TextBlock Text="No Photo" Foreground="#9E9E9E"
-                                                   HorizontalAlignment="Center"/>
-                                    </StackPanel>
-
-                                    <!-- Actual photo when available -->
-                                    <Image Source="{Binding PhotoPreview}"
-                                           Stretch="UniformToFill">
-                                        <Image.Style>
-                                            <Style TargetType="Image">
-                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                        <StackPanel.Style>
+                                            <Style TargetType="StackPanel">
+                                                <Setter Property="Visibility" Value="Visible"/>
                                                 <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding PhotoPreview, Converter={StaticResource NullToVis}}"
-                                                                 Value="Visible">
-                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    <DataTrigger Binding="{Binding HasPhotos}" Value="True">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
-                                        </Image.Style>
-                                    </Image>
+                                        </StackPanel.Style>
+                                        <materialDesign:PackIcon Kind="AccountCircle"
+                                                                 Width="90" Height="90"
+                                                                 Foreground="#9E9E9E"/>
+                                        <TextBlock Text="No Photos" Foreground="#9E9E9E"
+                                                   HorizontalAlignment="Center" FontSize="13"/>
+                                        <TextBlock Text="Click Add Photos to upload"
+                                                   Foreground="#BDBDBD" FontSize="11"
+                                                   HorizontalAlignment="Center" Margin="0,4"/>
+                                    </StackPanel>
+
+                                    <!-- Current photo -->
+                                    <Image Source="{Binding CurrentPhoto.Image}"
+                                           Stretch="UniformToFill"
+                                           Visibility="{Binding HasPhotos, Converter={StaticResource BoolToVis}}"/>
+
+                                    <!-- Navigation arrows (only when multiple) -->
+                                    <Grid Visibility="{Binding HasPhotos, Converter={StaticResource BoolToVis}}">
+                                        <Button HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                Command="{Binding PrevPhotoCommand}"
+                                                Style="{StaticResource MaterialDesignIconForegroundButton}"
+                                                Foreground="White" Background="#66000000"
+                                                Width="32" Height="32" Margin="4"
+                                                ToolTip="Previous photo">
+                                            <materialDesign:PackIcon Kind="ChevronLeft" Width="20" Height="20"/>
+                                        </Button>
+                                        <Button HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                Command="{Binding NextPhotoCommand}"
+                                                Style="{StaticResource MaterialDesignIconForegroundButton}"
+                                                Foreground="White" Background="#66000000"
+                                                Width="32" Height="32" Margin="4"
+                                                ToolTip="Next photo">
+                                            <materialDesign:PackIcon Kind="ChevronRight" Width="20" Height="20"/>
+                                        </Button>
+                                    </Grid>
+
+                                    <!-- Cover badge (index 0) -->
+                                    <Border VerticalAlignment="Top" HorizontalAlignment="Left"
+                                            Background="#4A148C" CornerRadius="0,0,8,0"
+                                            Padding="6,3"
+                                            Visibility="{Binding HasPhotos, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock FontSize="10" Foreground="White"
+                                                   Text="{Binding PhotoCounterText}"/>
+                                    </Border>
                                 </Grid>
                             </Border>
 
+                            <!-- Thumbnail strip -->
+                            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                          VerticalScrollBarVisibility="Disabled"
+                                          Margin="0,0,0,10"
+                                          Visibility="{Binding HasPhotos, Converter={StaticResource BoolToVis}}">
+                                <ListBox ItemsSource="{Binding Photos}"
+                                         SelectedIndex="{Binding CurrentPhotoIndex, Mode=TwoWay}"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                         BorderThickness="0" Background="Transparent">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Setter Property="Padding" Value="0"/>
+                                            <Setter Property="Margin" Value="3"/>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="ListBoxItem">
+                                                        <Border Width="52" Height="52" CornerRadius="6"
+                                                                ClipToBounds="True"
+                                                                x:Name="ThumbnailBorder"
+                                                                BorderBrush="Transparent"
+                                                                BorderThickness="2"
+                                                                Cursor="Hand">
+                                                            <ContentPresenter/>
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsSelected" Value="True">
+                                                                <Setter TargetName="ThumbnailBorder"
+                                                                        Property="BorderBrush" Value="#4A148C"/>
+                                                                <Setter TargetName="ThumbnailBorder"
+                                                                        Property="BorderThickness" Value="3"/>
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Image Source="{Binding Image}" Stretch="UniformToFill"
+                                                   Width="52" Height="52"/>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </ScrollViewer>
+
                             <!-- Photo Action Buttons -->
-                            <Button Command="{Binding UploadPhotoCommand}"
+                            <Button Command="{Binding AddPhotosCommand}"
                                     Style="{StaticResource MaterialDesignRaisedButton}"
                                     Background="#4A148C"
                                     HorizontalAlignment="Stretch" Margin="0,0,0,6">
                                 <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="Upload" Margin="0,0,8,0"/>
-                                    <TextBlock Text="Upload Photo"/>
+                                    <materialDesign:PackIcon Kind="ImagePlus" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Add Photos"/>
                                 </StackPanel>
                             </Button>
 
-                            <Button Command="{Binding RemovePhotoCommand}"
-                                    Style="{StaticResource MaterialDesignOutlinedButton}"
-                                    Foreground="Gray" BorderBrush="Gray"
-                                    HorizontalAlignment="Stretch">
-                                <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="ImageRemove" Margin="0,0,8,0"/>
-                                    <TextBlock Text="Remove Photo"/>
-                                </StackPanel>
-                            </Button>
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Command="{Binding SetCoverPhotoCommand}"
+                                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                                        ToolTip="Set current photo as cover (move to position 1)">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Star" Margin="0,0,6,0"/>
+                                        <TextBlock Text="Set Cover"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Grid.Column="2" Command="{Binding RemovePhotoCommand}"
+                                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                                        Foreground="#C62828" BorderBrush="#C62828"
+                                        ToolTip="Remove current photo from profile">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="ImageRemove" Margin="0,0,6,0"/>
+                                        <TextBlock Text="Remove"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
 
-                            <TextBlock Text="Supports JPG, PNG, BMP"
+                            <TextBlock Text="Supports JPG, PNG, BMP, WEBP • Multiple photos allowed"
                                        FontSize="10" Foreground="Gray"
-                                       HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                                       HorizontalAlignment="Center" Margin="0,4,0,0"
+                                       TextWrapping="Wrap" TextAlignment="Center"/>
                         </StackPanel>
                     </materialDesign:Card>
 

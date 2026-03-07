@@ -22,6 +22,29 @@
             <Setter Property="Margin" Value="0,1"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
+
+        <!-- Nav arrow button style -->
+        <Style x:Key="NavArrowStyle" TargetType="Button"
+               BasedOn="{StaticResource MaterialDesignIconForegroundButton}">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#55000000"/>
+            <Setter Property="Width" Value="44"/>
+            <Setter Property="Height" Value="44"/>
+        </Style>
+
+        <!-- Photo dot indicator style -->
+        <Style x:Key="DotActive" TargetType="Ellipse">
+            <Setter Property="Width" Value="10"/>
+            <Setter Property="Height" Value="10"/>
+            <Setter Property="Fill" Value="White"/>
+            <Setter Property="Margin" Value="3,0"/>
+        </Style>
+        <Style x:Key="DotInactive" TargetType="Ellipse">
+            <Setter Property="Width" Value="8"/>
+            <Setter Property="Height" Value="8"/>
+            <Setter Property="Fill" Value="#88FFFFFF"/>
+            <Setter Property="Margin" Value="3,0"/>
+        </Style>
     </Page.Resources>
 
     <Grid>
@@ -56,7 +79,7 @@
                               Foreground="White" Background="#4A148C"
                               BorderBrush="#7B1FA2"
                               Width="120"/>
-                    <TextBlock Text="{Binding CounterText}" Foreground="#CE93D8"
+                    <TextBlock Text="{Binding ProfileCounterText}" Foreground="#CE93D8"
                                VerticalAlignment="Center" Margin="20,0,0,0" FontSize="14"/>
                 </StackPanel>
 
@@ -87,7 +110,7 @@
                         Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}">
                 <ProgressBar IsIndeterminate="True" Width="200" Height="4"
                              Style="{StaticResource MaterialDesignLinearProgressBar}"/>
-                <TextBlock Text="Loading profiles..." Foreground="White"
+                <TextBlock Text="Loading profiles…" Foreground="White"
                            HorizontalAlignment="Center" Margin="0,12"/>
             </StackPanel>
 
@@ -122,12 +145,11 @@
                     <ColumnDefinition Width="380"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Left: Photo Area -->
+                <!-- Left: Photo Area with per-profile slideshow -->
                 <Grid Grid.Column="0" Margin="40,30,20,30">
-                    <Border CornerRadius="20" ClipToBounds="True"
-                            Background="#2D0A4E">
+                    <Border CornerRadius="20" ClipToBounds="True" Background="#2D0A4E">
                         <Grid>
-                            <!-- Photo background gradient -->
+                            <!-- Background gradient -->
                             <Rectangle>
                                 <Rectangle.Fill>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
@@ -139,6 +161,19 @@
 
                             <!-- No photo placeholder -->
                             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding CurrentPhoto}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding HasMultiplePhotos}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
                                 <materialDesign:PackIcon Kind="AccountCircle"
                                                          Width="160" Height="160"
                                                          Foreground="#4A148C"/>
@@ -147,10 +182,46 @@
                                            Margin="0,10"/>
                             </StackPanel>
 
-                            <!-- Actual photo -->
+                            <!-- Current photo of this profile -->
                             <Image Source="{Binding CurrentPhoto}"
                                    Stretch="Uniform"
-                                   Margin="20"/>
+                                   Margin="20">
+                                <Image.Style>
+                                    <Style TargetType="Image">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding CurrentPhoto}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Image.Style>
+                            </Image>
+
+                            <!-- Left/Right photo navigation (only if multiple photos) -->
+                            <Grid Visibility="{Binding HasMultiplePhotos, Converter={StaticResource BoolToVis}}">
+                                <Button HorizontalAlignment="Left" VerticalAlignment="Center"
+                                        Command="{Binding PrevPhotoCommand}"
+                                        Style="{StaticResource NavArrowStyle}"
+                                        Margin="12">
+                                    <materialDesign:PackIcon Kind="ChevronLeft" Width="22" Height="22"/>
+                                </Button>
+                                <Button HorizontalAlignment="Right" VerticalAlignment="Center"
+                                        Command="{Binding NextPhotoCommand}"
+                                        Style="{StaticResource NavArrowStyle}"
+                                        Margin="12">
+                                    <materialDesign:PackIcon Kind="ChevronRight" Width="22" Height="22"/>
+                                </Button>
+                            </Grid>
+
+                            <!-- Photo counter + dots overlay (top-right) -->
+                            <Border HorizontalAlignment="Right" VerticalAlignment="Top"
+                                    Background="#88000000" CornerRadius="8" Padding="8,4"
+                                    Margin="12"
+                                    Visibility="{Binding HasMultiplePhotos, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="{Binding PhotoCounterText}"
+                                           Foreground="White" FontSize="12"/>
+                            </Border>
 
                             <!-- Name overlay at bottom -->
                             <Border VerticalAlignment="Bottom" CornerRadius="0,0,20,20"
@@ -165,9 +236,10 @@
                                     <TextBlock Text="{Binding CurrentProfile.Name}"
                                                Foreground="White" FontSize="22"
                                                FontWeight="Bold" TextWrapping="Wrap"/>
-                                    <StackPanel Orientation="Horizontal">
-                                        <Border CornerRadius="4" Padding="6,2" Margin="0,4,8,0"
-                                                Background="{Binding CurrentProfile.Gender, Converter={StaticResource GenderColor}}">
+                                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                        <Border CornerRadius="4" Padding="6,2" Margin="0,0,8,0"
+                                                Background="{Binding CurrentProfile.Gender,
+                                                    Converter={StaticResource GenderColor}}">
                                             <TextBlock Text="{Binding CurrentProfile.Gender}"
                                                        Foreground="White" FontSize="11"/>
                                         </Border>
@@ -198,11 +270,13 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Date of Birth" Style="{StaticResource InfoLabel}"/>
-                                <TextBlock Text="{Binding CurrentProfile.DateOfBirth, TargetNullValue='N/A'}" Style="{StaticResource InfoValue}"/>
+                                <TextBlock Text="{Binding CurrentProfile.DateOfBirth, TargetNullValue='N/A'}"
+                                           Style="{StaticResource InfoValue}"/>
                             </StackPanel>
                             <StackPanel Grid.Column="1">
                                 <TextBlock Text="Height" Style="{StaticResource InfoLabel}"/>
-                                <TextBlock Text="{Binding CurrentProfile.Height, TargetNullValue='N/A'}" Style="{StaticResource InfoValue}"/>
+                                <TextBlock Text="{Binding CurrentProfile.Height, TargetNullValue='N/A'}"
+                                           Style="{StaticResource InfoValue}"/>
                             </StackPanel>
                         </Grid>
 
@@ -213,11 +287,13 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Caste" Style="{StaticResource InfoLabel}"/>
-                                <TextBlock Text="{Binding CurrentProfile.Caste, TargetNullValue='N/A'}" Style="{StaticResource InfoValue}"/>
+                                <TextBlock Text="{Binding CurrentProfile.Caste, TargetNullValue='N/A'}"
+                                           Style="{StaticResource InfoValue}"/>
                             </StackPanel>
                             <StackPanel Grid.Column="1">
                                 <TextBlock Text="Complexion" Style="{StaticResource InfoLabel}"/>
-                                <TextBlock Text="{Binding CurrentProfile.Complexion, TargetNullValue='N/A'}" Style="{StaticResource InfoValue}"/>
+                                <TextBlock Text="{Binding CurrentProfile.Complexion, TargetNullValue='N/A'}"
+                                           Style="{StaticResource InfoValue}"/>
                             </StackPanel>
                         </Grid>
 
@@ -234,15 +310,18 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Birth Star" Style="{StaticResource InfoLabel}"/>
-                                <TextBlock Text="{Binding CurrentProfile.BirthStar, TargetNullValue='N/A'}" Style="{StaticResource InfoValue}"/>
+                                <TextBlock Text="{Binding CurrentProfile.BirthStar, TargetNullValue='N/A'}"
+                                           Style="{StaticResource InfoValue}"/>
                             </StackPanel>
                             <StackPanel Grid.Column="1">
                                 <TextBlock Text="Padam" Style="{StaticResource InfoLabel}"/>
-                                <TextBlock Text="{Binding CurrentProfile.Padam, TargetNullValue='N/A'}" Style="{StaticResource InfoValue}"/>
+                                <TextBlock Text="{Binding CurrentProfile.Padam, TargetNullValue='N/A'}"
+                                           Style="{StaticResource InfoValue}"/>
                             </StackPanel>
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="Raasi" Style="{StaticResource InfoLabel}"/>
-                                <TextBlock Text="{Binding CurrentProfile.Raasi, TargetNullValue='N/A'}" Style="{StaticResource InfoValue}"/>
+                                <TextBlock Text="{Binding CurrentProfile.Raasi, TargetNullValue='N/A'}"
+                                           Style="{StaticResource InfoValue}"/>
                             </StackPanel>
                         </Grid>
 
@@ -253,11 +332,13 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Paternal Gotram" Style="{StaticResource InfoLabel}"/>
-                                <TextBlock Text="{Binding CurrentProfile.PaternalGotram, TargetNullValue='N/A'}" Style="{StaticResource InfoValue}"/>
+                                <TextBlock Text="{Binding CurrentProfile.PaternalGotram, TargetNullValue='N/A'}"
+                                           Style="{StaticResource InfoValue}"/>
                             </StackPanel>
                             <StackPanel Grid.Column="1">
                                 <TextBlock Text="Maternal Gotram" Style="{StaticResource InfoLabel}"/>
-                                <TextBlock Text="{Binding CurrentProfile.MaternalGotram, TargetNullValue='N/A'}" Style="{StaticResource InfoValue}"/>
+                                <TextBlock Text="{Binding CurrentProfile.MaternalGotram, TargetNullValue='N/A'}"
+                                           Style="{StaticResource InfoValue}"/>
                             </StackPanel>
                         </Grid>
 
@@ -266,34 +347,62 @@
                         <TextBlock Text="Education &amp; Career" Foreground="#CE93D8"
                                    FontSize="13" FontWeight="Bold" Margin="0,4,0,10" Opacity="0.8"/>
 
-                        <TextBlock Text="Qualification" Style="{StaticResource InfoLabel}"/>
-                        <TextBlock Text="{Binding CurrentProfile.Qualification, TargetNullValue='N/A'}" Style="{StaticResource InfoValue}" Margin="0,1,0,8"/>
-
-                        <TextBlock Text="Designation" Style="{StaticResource InfoLabel}"/>
-                        <TextBlock Text="{Binding CurrentProfile.Designation, TargetNullValue='N/A'}" Style="{StaticResource InfoValue}" Margin="0,1,0,8"/>
-
-                        <TextBlock Text="Company" Style="{StaticResource InfoLabel}"/>
-                        <TextBlock Text="{Binding CurrentProfile.CompanyAddress, TargetNullValue='N/A'}" Style="{StaticResource InfoValue}" Margin="0,1,0,8"/>
+                        <StackPanel Margin="0,0,0,6">
+                            <TextBlock Text="Qualification" Style="{StaticResource InfoLabel}"/>
+                            <TextBlock Text="{Binding CurrentProfile.Qualification, TargetNullValue='N/A'}"
+                                       Style="{StaticResource InfoValue}"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,0,6">
+                            <TextBlock Text="Designation" Style="{StaticResource InfoLabel}"/>
+                            <TextBlock Text="{Binding CurrentProfile.Designation, TargetNullValue='N/A'}"
+                                       Style="{StaticResource InfoValue}"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,0,6">
+                            <TextBlock Text="Company" Style="{StaticResource InfoLabel}"/>
+                            <TextBlock Text="{Binding CurrentProfile.CompanyAddress, TargetNullValue='N/A'}"
+                                       Style="{StaticResource InfoValue}"/>
+                        </StackPanel>
 
                         <!-- Family -->
                         <Separator Background="#4A148C" Margin="0,10"/>
                         <TextBlock Text="Family" Foreground="#CE93D8"
                                    FontSize="13" FontWeight="Bold" Margin="0,4,0,10" Opacity="0.8"/>
 
-                        <Grid Margin="0,0,0,8">
+                        <Grid Margin="0,0,0,6">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Father" Style="{StaticResource InfoLabel}"/>
-                                <TextBlock Text="{Binding CurrentProfile.FatherName, TargetNullValue='N/A'}" Style="{StaticResource InfoValue}"/>
-                                <TextBlock Text="{Binding CurrentProfile.FatherOccupation, TargetNullValue=''}" Style="{StaticResource InfoLabel}"/>
+                                <TextBlock Text="{Binding CurrentProfile.FatherName, TargetNullValue='N/A'}"
+                                           Style="{StaticResource InfoValue}"/>
+                                <TextBlock Text="{Binding CurrentProfile.FatherOccupation, TargetNullValue=''}"
+                                           Foreground="#CE93D8" FontSize="11"/>
                             </StackPanel>
                             <StackPanel Grid.Column="1">
                                 <TextBlock Text="Mother" Style="{StaticResource InfoLabel}"/>
-                                <TextBlock Text="{Binding CurrentProfile.MotherName, TargetNullValue='N/A'}" Style="{StaticResource InfoValue}"/>
-                                <TextBlock Text="{Binding CurrentProfile.MotherOccupation, TargetNullValue=''}" Style="{StaticResource InfoLabel}"/>
+                                <TextBlock Text="{Binding CurrentProfile.MotherName, TargetNullValue='N/A'}"
+                                           Style="{StaticResource InfoValue}"/>
+                                <TextBlock Text="{Binding CurrentProfile.MotherOccupation, TargetNullValue=''}"
+                                           Foreground="#CE93D8" FontSize="11"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Brothers" Style="{StaticResource InfoLabel}"/>
+                                <TextBlock Text="{Binding CurrentProfile.BrotherCount, TargetNullValue='N/A'}"
+                                           Style="{StaticResource InfoValue}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Sisters" Style="{StaticResource InfoLabel}"/>
+                                <TextBlock Text="{Binding CurrentProfile.SisterCount, TargetNullValue='N/A'}"
+                                           Style="{StaticResource InfoValue}"/>
                             </StackPanel>
                         </Grid>
 
@@ -302,30 +411,40 @@
                         <TextBlock Text="Contact" Foreground="#CE93D8"
                                    FontSize="13" FontWeight="Bold" Margin="0,4,0,10" Opacity="0.8"/>
 
-                        <TextBlock Text="{Binding CurrentProfile.Phone1, TargetNullValue='N/A'}" Style="{StaticResource InfoValue}"/>
-                        <TextBlock Text="{Binding CurrentProfile.Phone2, TargetNullValue=''}" Style="{StaticResource InfoValue}"/>
-
-                        <!-- Location -->
-                        <Separator Background="#4A148C" Margin="0,10"/>
-                        <TextBlock Text="District" Style="{StaticResource InfoLabel}"/>
-                        <TextBlock Foreground="White" FontSize="13" Margin="0,1,0,4">
-                            <Run Text="{Binding CurrentProfile.District, TargetNullValue=''}"/>
-                            <Run Text=","/>
-                            <Run Text="{Binding CurrentProfile.State, TargetNullValue=''}"/>
-                        </TextBlock>
+                        <StackPanel Margin="0,0,0,4">
+                            <TextBlock Text="Phone 1" Style="{StaticResource InfoLabel}"/>
+                            <TextBlock Text="{Binding CurrentProfile.Phone1, TargetNullValue='N/A'}"
+                                       Style="{StaticResource InfoValue}"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,0,4">
+                            <TextBlock Text="Phone 2" Style="{StaticResource InfoLabel}"/>
+                            <TextBlock Text="{Binding CurrentProfile.Phone2, TargetNullValue='N/A'}"
+                                       Style="{StaticResource InfoValue}"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,0,4">
+                            <TextBlock Text="District / State" Style="{StaticResource InfoLabel}"/>
+                            <TextBlock Style="{StaticResource InfoValue}">
+                                <Run Text="{Binding CurrentProfile.District, TargetNullValue=''}"/>
+                                <Run Text=","/>
+                                <Run Text="{Binding CurrentProfile.State, TargetNullValue=''}"/>
+                            </TextBlock>
+                        </StackPanel>
 
                         <!-- Expectations -->
                         <Separator Background="#4A148C" Margin="0,10"/>
-                        <TextBlock Text="Expectations" Style="{StaticResource InfoLabel}"/>
+                        <TextBlock Text="Partner Expectations" Foreground="#CE93D8"
+                                   FontSize="13" FontWeight="Bold" Margin="0,4,0,6" Opacity="0.8"/>
                         <TextBlock Text="{Binding CurrentProfile.ExpectationsFromPartner, TargetNullValue='Not specified'}"
-                                   Style="{StaticResource InfoValue}" Margin="0,4,0,20"/>
+                                   Style="{StaticResource InfoValue}" Opacity="0.9"
+                                   TextWrapping="Wrap" Margin="0,0,0,20"/>
+
                     </StackPanel>
                 </ScrollViewer>
             </Grid>
         </Grid>
 
-        <!-- ═══ Bottom Controls ══════════════════════════════════════ -->
-        <Border Grid.Row="2" Background="#2D0A4E" Padding="20,12">
+        <!-- ═══ Bottom Playback Controls ═══════════════════════════ -->
+        <Border Grid.Row="2" Background="#2D0A4E" Padding="16,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -333,62 +452,57 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Counter & Progress -->
-                <TextBlock Grid.Column="0" Text="{Binding CounterText}"
-                           Foreground="#CE93D8" FontSize="14"
-                           VerticalAlignment="Center"/>
-
-                <!-- Navigation Buttons -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                <!-- Profile navigation -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center"
+                            HorizontalAlignment="Left">
+                    <TextBlock Text="Profile:" Foreground="#CE93D8" VerticalAlignment="Center"
+                               Margin="0,0,8,0" FontSize="12"/>
                     <Button Command="{Binding PreviousCommand}"
-                            Style="{StaticResource MaterialDesignFlatButton}"
-                            Foreground="White" Width="56" Height="56">
-                        <materialDesign:PackIcon Kind="SkipPrevious" Width="32" Height="32"/>
+                            Style="{StaticResource MaterialDesignIconForegroundButton}"
+                            Foreground="#CE93D8" Width="36" Height="36"
+                            ToolTip="Previous Profile">
+                        <materialDesign:PackIcon Kind="SkipPrevious" Width="22" Height="22"/>
                     </Button>
-
-                    <Button Command="{Binding PlayPauseCommand}"
-                            Style="{StaticResource MaterialDesignRaisedButton}"
-                            Background="#7B1FA2"
-                            Width="100" Height="44" Margin="8,0">
-                        <TextBlock Text="{Binding PlayPauseLabel}" FontSize="14" FontWeight="Bold"/>
-                    </Button>
-
+                    <TextBlock Text="{Binding ProfileCounterText}" Foreground="White"
+                               VerticalAlignment="Center" Margin="8,0" FontSize="13"/>
                     <Button Command="{Binding NextCommand}"
-                            Style="{StaticResource MaterialDesignFlatButton}"
-                            Foreground="White" Width="56" Height="56">
-                        <materialDesign:PackIcon Kind="SkipNext" Width="32" Height="32"/>
+                            Style="{StaticResource MaterialDesignIconForegroundButton}"
+                            Foreground="#CE93D8" Width="36" Height="36"
+                            ToolTip="Next Profile">
+                        <materialDesign:PackIcon Kind="SkipNext" Width="22" Height="22"/>
                     </Button>
                 </StackPanel>
 
-                <!-- Thumbnail Strip -->
-                <ScrollViewer Grid.Column="2" HorizontalScrollBarVisibility="Auto"
-                              VerticalScrollBarVisibility="Hidden"
-                              HorizontalAlignment="Right">
-                    <ItemsControl ItemsSource="{Binding Profiles}" MaxWidth="300">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Width="44" Height="44" CornerRadius="22"
-                                        Margin="3,0" ClipToBounds="True"
-                                        Background="#4A148C" Cursor="Hand">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Setter Property="BorderThickness" Value="0"/>
-                                            <Setter Property="Opacity" Value="0.6"/>
-                                        </Style>
-                                    </Border.Style>
-                                    <materialDesign:PackIcon Kind="AccountCircle"
-                                                             Foreground="#CE93D8"
-                                                             Width="44" Height="44"/>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
+                <!-- Play / Pause -->
+                <Button Grid.Column="1"
+                        Command="{Binding PlayPauseCommand}"
+                        Style="{StaticResource MaterialDesignRaisedButton}"
+                        Background="#4A148C" Width="160" Height="44">
+                    <TextBlock Text="{Binding PlayPauseLabel}" FontSize="15"/>
+                </Button>
+
+                <!-- Photo navigation (shown only if multiple photos on this profile) -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal"
+                            HorizontalAlignment="Right" VerticalAlignment="Center"
+                            Visibility="{Binding HasMultiplePhotos, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="Photo:" Foreground="#CE93D8" VerticalAlignment="Center"
+                               Margin="0,0,8,0" FontSize="12"/>
+                    <Button Command="{Binding PrevPhotoCommand}"
+                            Style="{StaticResource MaterialDesignIconForegroundButton}"
+                            Foreground="#CE93D8" Width="36" Height="36"
+                            ToolTip="Previous Photo">
+                        <materialDesign:PackIcon Kind="ChevronLeft" Width="20" Height="20"/>
+                    </Button>
+                    <TextBlock Text="{Binding PhotoCounterText}" Foreground="White"
+                               VerticalAlignment="Center" Margin="6,0" FontSize="13"/>
+                    <Button Command="{Binding NextPhotoCommand}"
+                            Style="{StaticResource MaterialDesignIconForegroundButton}"
+                            Foreground="#CE93D8" Width="36" Height="36"
+                            ToolTip="Next Photo">
+                        <materialDesign:PackIcon Kind="ChevronRight" Width="20" Height="20"/>
+                    </Button>
+                </StackPanel>
+
             </Grid>
         </Border>
     </Grid>

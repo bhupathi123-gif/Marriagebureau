@@ -73,11 +73,15 @@ namespace MarriageBureau.Models
         public string? ExpectationsFromPartner { get; set; }
 
         // ─── Files ────────────────────────────────────────────────────────
-        /// <summary>Full path to the profile photo on disk</summary>
+        /// <summary>Primary / cover photo path (kept for backward compat and quick access)</summary>
         public string? PhotoPath { get; set; }
 
         /// <summary>Full path to the biodata PDF on disk</summary>
         public string? PdfPath { get; set; }
+
+        // ─── Multiple Photos (gallery) ────────────────────────────────────
+        /// <summary>All photos for this profile, ordered by SortOrder</summary>
+        public List<BiodataPhoto> Photos { get; set; } = new();
 
         // ─── Meta ─────────────────────────────────────────────────────────
         public DateTime CreatedAt { get; set; } = DateTime.Now;
@@ -108,9 +112,27 @@ namespace MarriageBureau.Models
         }
 
         [NotMapped]
-        public bool HasPhoto => !string.IsNullOrWhiteSpace(PhotoPath) && System.IO.File.Exists(PhotoPath);
+        public bool HasPhoto => (!string.IsNullOrWhiteSpace(PhotoPath) && System.IO.File.Exists(PhotoPath))
+                                || (Photos != null && Photos.Count > 0 && Photos[0].Exists);
 
         [NotMapped]
         public bool HasPdf => !string.IsNullOrWhiteSpace(PdfPath) && System.IO.File.Exists(PdfPath);
+
+        /// <summary>Returns the best available primary photo path (gallery first, then legacy field)</summary>
+        [NotMapped]
+        public string? PrimaryPhotoPath
+        {
+            get
+            {
+                if (Photos != null && Photos.Count > 0)
+                {
+                    var first = Photos.Find(p => p.Exists);
+                    if (first != null) return first.FilePath;
+                }
+                if (!string.IsNullOrWhiteSpace(PhotoPath) && System.IO.File.Exists(PhotoPath))
+                    return PhotoPath;
+                return null;
+            }
+        }
     }
 }
