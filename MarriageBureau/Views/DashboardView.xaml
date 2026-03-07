@@ -84,7 +84,7 @@
                     UniformCornerRadius="12"
                     materialDesign:ElevationAssist.Elevation="Dp3">
                     <StackPanel HorizontalAlignment="Center">
-                        <materialDesign:PackIcon Kind="FilePdf" Width="36" Height="36"
+                        <materialDesign:PackIcon Kind="FilePdfBox" Width="36" Height="36"
                                                  Foreground="Crimson" HorizontalAlignment="Center"/>
                         <TextBlock Text="{Binding WithPdfs}" FontSize="36" FontWeight="Bold"
                                    HorizontalAlignment="Center" Foreground="Crimson"/>

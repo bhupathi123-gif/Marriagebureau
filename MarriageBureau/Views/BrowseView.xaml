@@ -164,7 +164,7 @@
                         <DataGridTemplateColumn Header="PDF" Width="48">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <materialDesign:PackIcon Kind="FilePdf"
+                                    <materialDesign:PackIcon Kind="FilePdfBox"
                                         Foreground="Crimson"
                                         HorizontalAlignment="Center"
                                         Visibility="{Binding HasPdf, Converter={StaticResource BoolToVis}}"/>
@@ -209,7 +209,7 @@
                             Style="{StaticResource MaterialDesignOutlinedButton}"
                             Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="FilePdf" Margin="0,0,6,0"/>
+                            <materialDesign:PackIcon Kind="FilePdfBox" Margin="0,0,6,0"/>
                             <TextBlock Text="View PDF"/>
                         </StackPanel>
                     </Button>

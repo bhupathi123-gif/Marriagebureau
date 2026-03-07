@@ -546,7 +546,7 @@
                             <Border Background="#FFEBEE" CornerRadius="8" Padding="12"
                                     Margin="0,0,0,12">
                                 <StackPanel>
-                                    <materialDesign:PackIcon Kind="FilePdf"
+                                    <materialDesign:PackIcon Kind="FilePdfBox"
                                                              Width="40" Height="40"
                                                              Foreground="Crimson"
                                                              HorizontalAlignment="Center"/>
