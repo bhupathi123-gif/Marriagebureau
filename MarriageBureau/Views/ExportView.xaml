@@ -1,0 +1,407 @@
+<Page x:Class="MarriageBureau.Views.ExportView"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+      xmlns:converters="clr-namespace:MarriageBureau.Converters"
+      Background="{DynamicResource MaterialDesignPaper}"
+      Title="Export Biodata">
+
+    <Page.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <converters:NullToVisibilityConverter x:Key="NullToVis"/>
+    </Page.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ═══ Header ══════════════════════════════════════════════ -->
+        <Border Grid.Row="0" Background="#880E4F" Padding="20,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="FilePdfBox" Width="28" Height="28"
+                                                 Foreground="#F48FB1" Margin="0,0,10,0"
+                                                 VerticalAlignment="Center"/>
+                        <TextBlock Text="Export Biodata Profile" FontSize="22"
+                                   FontWeight="Bold" Foreground="White"/>
+                    </StackPanel>
+                    <TextBlock Text="Generate a professional marriage biodata PDF or image with photos"
+                               FontSize="12" Foreground="#F48FB1" Margin="38,2,0,0"/>
+                </StackPanel>
+                <Button Grid.Column="1" Command="{Binding CancelCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Foreground="White" BorderBrush="White">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="ArrowLeft" Margin="0,0,6,0"/>
+                        <TextBlock Text="Back"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- ═══ Main Content ════════════════════════════════════════ -->
+        <Grid Grid.Row="1" Margin="16,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="320"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- LEFT: Profile selector -->
+            <materialDesign:Card Grid.Column="0" Padding="0" UniformCornerRadius="8"
+                                 materialDesign:ElevationAssist.Elevation="Dp2">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Background="#FCE4EC" Padding="12,8"
+                            CornerRadius="8,8,0,0">
+                        <TextBlock Text="Select Profile to Export"
+                                   FontWeight="SemiBold" Foreground="#880E4F"/>
+                    </Border>
+
+                    <!-- Search / filter -->
+                    <StackPanel Grid.Row="1" Margin="8,8,8,4">
+                        <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                 materialDesign:HintAssist.Hint="🔍 Search name / district…"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 Margin="0,0,0,6"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0"
+                                      ItemsSource="{Binding GenderOptions}"
+                                      SelectedItem="{Binding GenderFilter}"
+                                      materialDesign:HintAssist.Hint="Gender"
+                                      Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                      Margin="0,0,6,0"/>
+                            <Button Grid.Column="1" Command="{Binding ClearSearchCommand}"
+                                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                                    Width="36" Height="36" Padding="0"
+                                    ToolTip="Clear filters">
+                                <materialDesign:PackIcon Kind="FilterRemove" Width="16" Height="16"/>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Profile list -->
+                    <ListBox Grid.Row="2"
+                             ItemsSource="{Binding FilteredProfiles}"
+                             SelectedItem="{Binding SelectedProfile, Mode=TwoWay}"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             BorderThickness="0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="4,3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Width="36" Height="36"
+                                            CornerRadius="18" ClipToBounds="True"
+                                            Background="#EDE7F6" Margin="0,0,8,0">
+                                        <Image Source="{Binding PrimaryPhotoPath,
+                                                    Converter={StaticResource NullToVis}}"
+                                               Stretch="UniformToFill"/>
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}"
+                                                   FontWeight="SemiBold" FontSize="12"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock FontSize="10" Foreground="Gray">
+                                            <Run Text="{Binding Gender}"/>
+                                            <Run Text=" • "/>
+                                            <Run Text="{Binding AgeDisplay}"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </materialDesign:Card>
+
+            <!-- RIGHT: Export panel -->
+            <Grid Grid.Column="2">
+                <!-- No selection placeholder -->
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                            Visibility="{Binding HasSelection, Converter={StaticResource BoolToVis}}">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </Style>
+                    </StackPanel.Style>
+                </StackPanel>
+
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Visible"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasSelection}" Value="True">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <materialDesign:PackIcon Kind="AccountSearch" Width="80" Height="80"
+                                             Foreground="#F48FB1" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Select a profile from the left" FontSize="18"
+                               FontWeight="SemiBold" Foreground="#880E4F"
+                               HorizontalAlignment="Center" Margin="0,12,0,4"/>
+                    <TextBlock Text="Choose a profile to preview and export as PDF or image"
+                               Foreground="Gray" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Export content (when profile selected) -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              Visibility="{Binding HasSelection, Converter={StaticResource BoolToVis}}">
+                    <StackPanel Margin="0,0,0,20">
+
+                        <!-- Profile summary header -->
+                        <materialDesign:Card Padding="16" UniformCornerRadius="10" Margin="0,0,0,12"
+                                             materialDesign:ElevationAssist.Elevation="Dp2">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{Binding SelectedProfile.Name}"
+                                               FontSize="20" FontWeight="Bold"
+                                               Foreground="#880E4F"/>
+                                    <TextBlock FontSize="13" Foreground="Gray" Margin="0,4">
+                                        <Run Text="{Binding SelectedProfile.Gender}"/>
+                                        <Run Text=" | Age: "/>
+                                        <Run Text="{Binding SelectedProfile.AgeDisplay}"/>
+                                        <Run Text=" | "/>
+                                        <Run Text="{Binding SelectedProfile.Qualification}"/>
+                                    </TextBlock>
+                                    <TextBlock FontSize="12" Foreground="#5E35B1">
+                                        <Run Text="{Binding SelectedProfile.BirthStar}"/>
+                                        <Run Text=" | Raasi: "/>
+                                        <Run Text="{Binding SelectedProfile.Raasi}"/>
+                                        <Run Text=" | "/>
+                                        <Run Text="{Binding SelectedProfile.District}"/>
+                                    </TextBlock>
+                                </StackPanel>
+                                <Border Grid.Column="1" Background="#FCE4EC"
+                                        CornerRadius="8" Padding="10,4">
+                                    <TextBlock Text="{Binding SelectedProfile.Caste}"
+                                               Foreground="#880E4F" FontWeight="SemiBold"/>
+                                </Border>
+                            </Grid>
+                        </materialDesign:Card>
+
+                        <!-- Two Photo Previews -->
+                        <materialDesign:Card Padding="16" UniformCornerRadius="10" Margin="0,0,0,12"
+                                             materialDesign:ElevationAssist.Elevation="Dp2">
+                            <StackPanel>
+                                <TextBlock Text="📸  Photos included in export (first 2 photos)"
+                                           FontWeight="Bold" Foreground="#880E4F" Margin="0,0,0,12"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="16"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Photo 1 -->
+                                    <Border Grid.Column="0" CornerRadius="8" ClipToBounds="True"
+                                            Background="#EDE7F6" Height="200">
+                                        <Grid>
+                                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                <StackPanel.Style>
+                                                    <Style TargetType="StackPanel">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Preview1}" Value="{x:Null}">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </StackPanel.Style>
+                                                <materialDesign:PackIcon Kind="ImageOff" Width="48" Height="48"
+                                                                         Foreground="#9E9E9E"/>
+                                                <TextBlock Text="Photo 1 — Not available"
+                                                           Foreground="Gray" FontSize="11"
+                                                           HorizontalAlignment="Center" Margin="0,6"/>
+                                            </StackPanel>
+                                            <Image Source="{Binding Preview1}" Stretch="UniformToFill">
+                                                <Image.Style>
+                                                    <Style TargetType="Image">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Preview1}" Value="{x:Null}">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Image.Style>
+                                            </Image>
+                                            <Image Source="{Binding Preview1}" Stretch="UniformToFill"
+                                                   Visibility="{Binding Preview1, Converter={StaticResource NullToVis}}"/>
+                                            <Border VerticalAlignment="Bottom" Background="#99000000"
+                                                    Padding="8,4">
+                                                <TextBlock Text="Photo 1 (Cover)" Foreground="White"
+                                                           FontSize="11" FontWeight="SemiBold"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Photo 2 -->
+                                    <Border Grid.Column="2" CornerRadius="8" ClipToBounds="True"
+                                            Background="#EDE7F6" Height="200">
+                                        <Grid>
+                                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                <StackPanel.Style>
+                                                    <Style TargetType="StackPanel">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Preview2}" Value="{x:Null}">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </StackPanel.Style>
+                                                <materialDesign:PackIcon Kind="ImageOff" Width="48" Height="48"
+                                                                         Foreground="#9E9E9E"/>
+                                                <TextBlock Text="Photo 2 — Not available"
+                                                           Foreground="Gray" FontSize="11"
+                                                           HorizontalAlignment="Center" Margin="0,6"/>
+                                            </StackPanel>
+                                            <Image Source="{Binding Preview2}" Stretch="UniformToFill"
+                                                   Visibility="{Binding Preview2, Converter={StaticResource NullToVis}}"/>
+                                            <Border VerticalAlignment="Bottom" Background="#99000000"
+                                                    Padding="8,4">
+                                                <TextBlock Text="Photo 2" Foreground="White"
+                                                           FontSize="11" FontWeight="SemiBold"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+
+                                <TextBlock Text="Tip: Add more photos in Edit Profile to include different photos in export"
+                                           FontSize="10" Foreground="Gray" Margin="0,8,0,0"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </materialDesign:Card>
+
+                        <!-- Export format info -->
+                        <materialDesign:Card Padding="16" UniformCornerRadius="10" Margin="0,0,0,12"
+                                             materialDesign:ElevationAssist.Elevation="Dp1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- PDF info -->
+                                <Border Grid.Column="0" Background="#FFEBEE" CornerRadius="8" Padding="14">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                            <materialDesign:PackIcon Kind="FilePdfBox" Foreground="Crimson"
+                                                                     Width="24" Height="24" Margin="0,0,8,0"/>
+                                            <TextBlock Text="PDF Export" FontWeight="Bold"
+                                                       FontSize="14" Foreground="Crimson"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="#555"
+                                                   Margin="0,0,0,8">
+                                            A4-size professional marriage biodata with coloured header,
+                                            two photos side-by-side, all personal/horoscope/family/contact
+                                            details in a clean two-column layout.
+                                        </TextBlock>
+                                        <Button Command="{Binding ExportPdfCommand}"
+                                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                                Background="Crimson" HorizontalAlignment="Stretch">
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="Download" Margin="0,0,8,0"/>
+                                                <TextBlock Text="Export as PDF"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Image info -->
+                                <Border Grid.Column="2" Background="#E8F5E9" CornerRadius="8" Padding="14">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                            <materialDesign:PackIcon Kind="Image" Foreground="#2E7D32"
+                                                                     Width="24" Height="24" Margin="0,0,8,0"/>
+                                            <TextBlock Text="Image Export" FontWeight="Bold"
+                                                       FontSize="14" Foreground="#2E7D32"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="#555"
+                                                   Margin="0,0,0,8">
+                                            Same beautiful biodata layout rendered as a high-resolution
+                                            JPEG image (150 DPI) — easy to share on WhatsApp, email
+                                            or print.
+                                        </TextBlock>
+                                        <Button Command="{Binding ExportImageCommand}"
+                                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                                Background="#2E7D32" HorizontalAlignment="Stretch">
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="ImageDownload" Margin="0,0,8,0"/>
+                                                <TextBlock Text="Export as Image"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </materialDesign:Card>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+
+        <!-- ═══ Status / Action Bar ══════════════════════════════════ -->
+        <materialDesign:Card Grid.Row="2" Padding="16,10" Margin="16,0,16,12"
+                             UniformCornerRadius="8"
+                             materialDesign:ElevationAssist.Elevation="Dp1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <ProgressBar IsIndeterminate="True" Width="100" Height="4" Margin="0,0,12,0"
+                                 Style="{StaticResource MaterialDesignLinearProgressBar}"
+                                 Visibility="{Binding IsExporting, Converter={StaticResource BoolToVis}}"/>
+                    <materialDesign:PackIcon Kind="Information" Foreground="#880E4F"
+                                             Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center"
+                               FontSize="12" Foreground="{DynamicResource MaterialDesignBody}"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+
+                <Button Grid.Column="1" Command="{Binding OpenExportCommand}"
+                        Style="{StaticResource MaterialDesignRaisedButton}"
+                        Background="#880E4F"
+                        Visibility="{Binding HasExportFile, Converter={StaticResource BoolToVis}}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="OpenInNew" Margin="0,0,8,0"/>
+                        <TextBlock Text="Open Exported File"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </materialDesign:Card>
+    </Grid>
+</Page>

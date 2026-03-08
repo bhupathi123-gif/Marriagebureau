@@ -9,7 +9,8 @@ namespace MarriageBureau.ViewModels
         Browse,
         AddEdit,
         Slideshow,
-        ExcelImport
+        ExcelImport,
+        Export
     }
 
     public class MainViewModel : BaseViewModel
@@ -29,6 +30,7 @@ namespace MarriageBureau.ViewModels
                 OnPropertyChanged(nameof(IsAddEdit));
                 OnPropertyChanged(nameof(IsSlideshow));
                 OnPropertyChanged(nameof(IsExcelImport));
+                OnPropertyChanged(nameof(IsExport));
             }
         }
 
@@ -44,17 +46,19 @@ namespace MarriageBureau.ViewModels
             set => SetProperty(ref _title, value);
         }
 
-        public bool IsDashboard    => CurrentPage == AppPage.Dashboard;
-        public bool IsBrowse       => CurrentPage == AppPage.Browse;
-        public bool IsAddEdit      => CurrentPage == AppPage.AddEdit;
-        public bool IsSlideshow    => CurrentPage == AppPage.Slideshow;
-        public bool IsExcelImport  => CurrentPage == AppPage.ExcelImport;
+        public bool IsDashboard   => CurrentPage == AppPage.Dashboard;
+        public bool IsBrowse      => CurrentPage == AppPage.Browse;
+        public bool IsAddEdit     => CurrentPage == AppPage.AddEdit;
+        public bool IsSlideshow   => CurrentPage == AppPage.Slideshow;
+        public bool IsExcelImport => CurrentPage == AppPage.ExcelImport;
+        public bool IsExport      => CurrentPage == AppPage.Export;
 
         public ICommand NavigateDashboardCommand   { get; }
         public ICommand NavigateBrowseCommand      { get; }
         public ICommand NavigateAddCommand         { get; }
         public ICommand NavigateSlideshowCommand   { get; }
         public ICommand NavigateExcelImportCommand { get; }
+        public ICommand NavigateExportCommand      { get; }
 
         private readonly MainWindow _mainWindow;
 
@@ -67,6 +71,7 @@ namespace MarriageBureau.ViewModels
             NavigateAddCommand         = new RelayCommand(() => Navigate(AppPage.AddEdit));
             NavigateSlideshowCommand   = new RelayCommand(() => Navigate(AppPage.Slideshow));
             NavigateExcelImportCommand = new RelayCommand(() => Navigate(AppPage.ExcelImport));
+            NavigateExportCommand      = new RelayCommand(() => Navigate(AppPage.Export));
         }
 
         public void Navigate(AppPage page, object? parameter = null)
@@ -88,6 +93,9 @@ namespace MarriageBureau.ViewModels
                     break;
                 case AppPage.ExcelImport:
                     _mainWindow.LoadExcelImport();
+                    break;
+                case AppPage.Export:
+                    _mainWindow.LoadExport(parameter as Models.Biodata);
                     break;
             }
         }

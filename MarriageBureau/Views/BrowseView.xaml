@@ -214,6 +214,17 @@
                         </StackPanel>
                     </Button>
 
+                    <Button Command="{Binding ExportCommand}"
+                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Margin="0,0,8,0"
+                            Foreground="#880E4F" BorderBrush="#880E4F"
+                            ToolTip="Export profile as PDF or image">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="FilePdfBox" Margin="0,0,6,0"/>
+                            <TextBlock Text="Export"/>
+                        </StackPanel>
+                    </Button>
+
                     <Button Command="{Binding ViewPdfCommand}"
                             Style="{StaticResource MaterialDesignOutlinedButton}"
                             Margin="0,0,8,0">

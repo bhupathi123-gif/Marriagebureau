@@ -44,6 +44,24 @@
                                FontSize="12" Foreground="#CE93D8"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Command="{Binding ImportFromPdfCommand}"
+                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Foreground="White" BorderBrush="White" Margin="0,0,10,0"
+                            ToolTip="Import data from a marriage biodata PDF">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="FileImport" Margin="0,0,6,0"/>
+                            <TextBlock Text="Import from PDF"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding ExportCommand}"
+                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Foreground="White" BorderBrush="White" Margin="0,0,10,0"
+                            ToolTip="Export profile as PDF or image (save first)">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="FilePdfBox" Margin="0,0,6,0"/>
+                            <TextBlock Text="Export PDF"/>
+                        </StackPanel>
+                    </Button>
                     <Button Command="{Binding CancelCommand}"
                             Style="{StaticResource MaterialDesignOutlinedButton}"
                             Foreground="White" BorderBrush="White" Margin="0,0,10,0">
