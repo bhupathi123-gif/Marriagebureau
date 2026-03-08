@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Configuration;
 using System.IO;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
@@ -423,8 +424,9 @@ namespace MarriageBureau.ViewModels
 
         private static string GetFilesDirectory(string subfolder)
         {
+            var rootPath = ConfigurationManager.AppSettings["DataRootPath"];
             var dir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+               rootPath,
                 "MarriageBureau", subfolder);
             Directory.CreateDirectory(dir);
             return dir;

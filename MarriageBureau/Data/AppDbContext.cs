@@ -1,5 +1,6 @@
 using MarriageBureau.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Configuration;
 using System.IO;
 
 namespace MarriageBureau.Data
@@ -11,8 +12,10 @@ namespace MarriageBureau.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
+            var rootPath = ConfigurationManager.AppSettings["DataRootPath"];
+            
             var appData = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                rootPath,
                 "MarriageBureau");
 
             Directory.CreateDirectory(appData);

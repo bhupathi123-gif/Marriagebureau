@@ -203,7 +203,7 @@ namespace MarriageBureau.ViewModels
                                    : ws.Name.ToUpper().Contains("MALE")   ? "MALE"
                                    : string.Empty;
 
-                for (int row = headerRow + 1; row <= ws.LastRowUsed()?.RowNumber() ?? headerRow; row++)
+                for (int row = headerRow + 1; row <= (ws.LastRowUsed()?.RowNumber() ?? headerRow); row++)
                 {
                     var nameCell = GetCell(ws, row, colMap, "NAME");
                     if (string.IsNullOrWhiteSpace(nameCell)) continue;
