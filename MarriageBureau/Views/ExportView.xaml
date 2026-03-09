@@ -124,7 +124,7 @@
                                         <TextBlock FontSize="10" Foreground="Gray">
                                             <Run Text="{Binding Gender}"/>
                                             <Run Text=" • "/>
-                                            <Run Text="{Binding AgeDisplay}"/>
+                                           <Run Text="{Binding AgeDisplay, Mode=OneWay}"/>
                                         </TextBlock>
                                     </StackPanel>
                                 </Grid>
@@ -186,7 +186,7 @@
                                     <TextBlock FontSize="13" Foreground="Gray" Margin="0,4">
                                         <Run Text="{Binding SelectedProfile.Gender}"/>
                                         <Run Text=" | Age: "/>
-                                        <Run Text="{Binding SelectedProfile.AgeDisplay}"/>
+                                        <Run Text="{Binding SelectedProfile.AgeDisplay, Mode=OneWay}"/>
                                         <Run Text=" | "/>
                                         <Run Text="{Binding SelectedProfile.Qualification}"/>
                                     </TextBlock>
@@ -357,7 +357,7 @@
                                                 Style="{StaticResource MaterialDesignRaisedButton}"
                                                 Background="#2E7D32" HorizontalAlignment="Stretch">
                                             <StackPanel Orientation="Horizontal">
-                                                <materialDesign:PackIcon Kind="ImageDownload" Margin="0,0,8,0"/>
+                                                <materialDesign:PackIcon Kind="Download" Margin="0,0,8,0"/>
                                                 <TextBlock Text="Export as Image"/>
                                             </StackPanel>
                                         </Button>

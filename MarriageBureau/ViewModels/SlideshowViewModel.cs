@@ -260,6 +260,7 @@ namespace MarriageBureau.ViewModels
 
         public async Task LoadAsync()
         {
+            if (IsLoading) return;
             IsPlaying = false;
             IsLoading = true;
             try
@@ -268,7 +269,7 @@ namespace MarriageBureau.ViewModels
 
                 // Load ALL profiles with photos for building option lists
                 var allProfiles = await ctx.Biodatas
-                                           .Include(b => b.Photos.OrderBy(p => p.SortOrder))
+                                           .Include(b => b.Photos)
                                            .ToListAsync();
 
                 // Rebuild dropdown lists from all profiles

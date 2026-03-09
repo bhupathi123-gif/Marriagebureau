@@ -94,7 +94,8 @@ namespace MarriageBureau.Services
                             .FontSize(18).FontColor(QuestPDF.Helpers.Colors.White).Bold();
                         hCol.Item().PaddingTop(3).Row(r2 =>
                         {
-                            r2.AutoItem().Background(lightAccent).Padding(3, 1)
+                            r2.AutoItem().Background(lightAccent).PaddingVertical(1)
+                                .PaddingHorizontal(3)
                               .Text(p.Gender?.ToUpper() ?? "")
                               .FontSize(8).FontColor(accentColor).Bold();
                             if (!string.IsNullOrWhiteSpace(p.AgeDisplay))
@@ -129,9 +130,9 @@ namespace MarriageBureau.Services
                     col.Item().Row(photoRow =>
                     {
                         photoRow.RelativeItem(1);  // spacer
-                        AddPhotoBox(photoRow.FixedItem(130), photo1, "Photo 1", accentColor);
-                        photoRow.FixedItem(16); // gap
-                        AddPhotoBox(photoRow.FixedItem(130), photo2, "Photo 2", accentColor);
+                        AddPhotoBox(photoRow.ConstantItem(130), photo1, "Photo 1", accentColor);
+                        photoRow.ConstantItem(16); // gap
+                        AddPhotoBox(photoRow.ConstantItem(130), photo2, "Photo 2", accentColor);
                         photoRow.RelativeItem(1);  // spacer
                     });
                     col.Item().PaddingVertical(8);
@@ -166,7 +167,7 @@ namespace MarriageBureau.Services
                         DetailRow(left, "Company / Address", p.CompanyAddress);
                     });
 
-                    mainRow.FixedItem(14);  // column gap
+                    mainRow.ConstantItem(14);  // column gap
 
                     // Right column
                     mainRow.RelativeItem().Column(right =>
@@ -255,7 +256,8 @@ namespace MarriageBureau.Services
         private static void SectionHeader(ColumnDescriptor col, string title, string color)
         {
             col.Item()
-               .Background(color).Padding(4, 2)
+               .Background(color).PaddingHorizontal(4)
+                 .PaddingVertical(2)
                .Text(title).FontSize(9).Bold()
                .FontColor(QuestPDF.Helpers.Colors.White);
             col.Item().PaddingTop(3);
@@ -266,7 +268,7 @@ namespace MarriageBureau.Services
             if (string.IsNullOrWhiteSpace(value)) return;
             col.Item().PaddingBottom(2).Row(row =>
             {
-                row.FixedItem(110).Text(label + " :").FontSize(8)
+                row.ConstantItem(110).Text(label + " :").FontSize(8)
                    .FontColor(QuestPDF.Helpers.Colors.Grey.Darken2);
                 row.RelativeItem().Text(value).FontSize(8).Bold();
             });
