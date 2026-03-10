@@ -15,13 +15,33 @@ namespace MarriageBureau.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            var rootPath = ConfigurationManager.AppSettings["DataRootPath"];
-
-            var appData = Path.Combine(rootPath, "MarriageBureau");
+            var appData = GetAppDataPath();
             Directory.CreateDirectory(appData);
 
             var dbPath = Path.Combine(appData, "marriage_bureau.db");
             optionsBuilder.UseSqlite($"Data Source={dbPath}");
+        }
+
+        /// <summary>
+        /// Returns the resolved application-data directory.
+        /// Prefers the configured DataRootPath (App.config) if the drive exists;
+        /// otherwise falls back to %APPDATA%\MarriageBureau so the app always starts.
+        /// </summary>
+        public static string GetAppDataPath()
+        {
+            var configuredRoot = ConfigurationManager.AppSettings["DataRootPath"];
+
+            if (!string.IsNullOrWhiteSpace(configuredRoot))
+            {
+                var root = Path.GetPathRoot(configuredRoot);
+                if (!string.IsNullOrEmpty(root) && Directory.Exists(root))
+                    return Path.Combine(configuredRoot, "MarriageBureau");
+            }
+
+            // Fallback: %APPDATA%\MarriageBureau (always writable on Windows)
+            return Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "MarriageBureau");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -4,7 +4,7 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:converters="clr-namespace:MarriageBureau.Converters"
         Title="Marriage Bureau – Login"
-        Height="560" Width="420"
+        Height="580" Width="430"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
         Background="#4A148C"
@@ -14,6 +14,8 @@
 
     <Window.Resources>
         <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <!-- Inverts a bool for IsEnabled: licence expired → button disabled -->
+        <converters:InverseBoolConverter       x:Key="InvertBool"/>
     </Window.Resources>
 
     <Grid>
@@ -53,18 +55,19 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Licence warning (valid but expiring soon) -->
+                <!-- Licence warning (valid but showing a message, not expired) -->
                 <Border Background="#FFF8E1" CornerRadius="8" Padding="12,8" Margin="0,0,0,16">
                     <Border.Style>
                         <Style TargetType="Border">
                             <Setter Property="Visibility" Value="Collapsed"/>
                             <Style.Triggers>
+                                <!-- Show only when licence is NOT expired but there IS a message -->
                                 <MultiDataTrigger>
                                     <MultiDataTrigger.Conditions>
                                         <Condition Binding="{Binding IsLicenceExpired}" Value="False"/>
-                                        <Condition Binding="{Binding LicenceMessage}" Value="{x:Null}"/>
+                                        <Condition Binding="{Binding HasLicenceWarning}"  Value="True"/>
                                     </MultiDataTrigger.Conditions>
-                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Setter Property="Visibility" Value="Visible"/>
                                 </MultiDataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -98,13 +101,12 @@
                                FontSize="11" TextWrapping="Wrap"/>
                 </Border>
 
-                <!-- Login button -->
+                <!-- Login button — disabled when licence is expired -->
                 <Button x:Name="LoginBtn"
                         Command="{Binding LoginCommand}"
                         Style="{StaticResource MaterialDesignRaisedButton}"
                         Background="#4A148C" Height="44" IsDefault="True"
-                        IsEnabled="{Binding IsLicenceExpired, Converter={StaticResource BoolToVis},
-                                    ConverterParameter=Inverse}">
+                        IsEnabled="{Binding IsLicenceExpired, Converter={StaticResource InvertBool}}">
                     <Grid Width="200">
                         <ProgressBar IsIndeterminate="True" Height="4"
                                      VerticalAlignment="Center"

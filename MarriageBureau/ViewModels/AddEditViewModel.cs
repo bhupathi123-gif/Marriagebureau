@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Configuration;
 using System.IO;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
@@ -551,12 +550,9 @@ namespace MarriageBureau.ViewModels
 
         private static string GetFilesDirectory(string subfolder)
         {
-            var rootPath = ConfigurationManager.AppSettings["DataRootPath"];
-            var dir = Path.Combine(
-               rootPath,
-                "MarriageBureau", subfolder);
-            Directory.CreateDirectory(dir);
-            return dir;
+            var baseDir = Path.Combine(AppDbContext.GetAppDataPath(), subfolder);
+            Directory.CreateDirectory(baseDir);
+            return baseDir;
         }
 
         private static Biodata CopyBiodata(Biodata src) => new()

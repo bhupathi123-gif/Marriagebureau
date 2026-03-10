@@ -1,16 +1,16 @@
+using System.Windows;
 using System.Windows.Input;
 using MarriageBureau.Data;
 using MarriageBureau.Models;
 using MarriageBureau.Services;
-using Microsoft.EntityFrameworkCore;
 
 namespace MarriageBureau.ViewModels
 {
     public class LoginViewModel : BaseViewModel
     {
-        private string _username   = string.Empty;
-        private string _password   = string.Empty;
-        private string _errorMessage = string.Empty;
+        private string _username      = string.Empty;
+        private string _password      = string.Empty;
+        private string _errorMessage  = string.Empty;
         private bool   _isLoggingIn;
         private bool   _isLicenceExpired;
         private string _licenceMessage = string.Empty;
@@ -22,7 +22,7 @@ namespace MarriageBureau.ViewModels
             set => SetProperty(ref _username, value);
         }
 
-        // Password is bound via code-behind (PasswordBox.Password can't bind directly)
+        // Password is set from code-behind (PasswordBox cannot bind directly)
         public string Password
         {
             get => _password;
@@ -32,7 +32,11 @@ namespace MarriageBureau.ViewModels
         public string ErrorMessage
         {
             get => _errorMessage;
-            set { SetProperty(ref _errorMessage, value); OnPropertyChanged(nameof(HasError)); }
+            set
+            {
+                SetProperty(ref _errorMessage, value);
+                OnPropertyChanged(nameof(HasError));
+            }
         }
 
         public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
@@ -40,20 +44,36 @@ namespace MarriageBureau.ViewModels
         public bool IsLoggingIn
         {
             get => _isLoggingIn;
-            set => SetProperty(ref _isLoggingIn, value);
+            set
+            {
+                SetProperty(ref _isLoggingIn, value);
+                // Refresh command can-execute on the UI thread
+                CommandManager.InvalidateRequerySuggested();
+            }
         }
 
         public bool IsLicenceExpired
         {
             get => _isLicenceExpired;
-            set => SetProperty(ref _isLicenceExpired, value);
+            set
+            {
+                SetProperty(ref _isLicenceExpired, value);
+                OnPropertyChanged(nameof(HasLicenceWarning));
+            }
         }
 
         public string LicenceMessage
         {
             get => _licenceMessage;
-            set => SetProperty(ref _licenceMessage, value);
+            set
+            {
+                SetProperty(ref _licenceMessage, value);
+                OnPropertyChanged(nameof(HasLicenceWarning));
+            }
         }
+
+        /// <summary>True when the licence is valid but there is still a message to display (e.g. expiry warning).</summary>
+        public bool HasLicenceWarning => !IsLicenceExpired && !string.IsNullOrWhiteSpace(LicenceMessage);
 
         public string BusinessName
         {
@@ -61,30 +81,23 @@ namespace MarriageBureau.ViewModels
             set => SetProperty(ref _businessName, value);
         }
 
-        // Set externally from the Window after successful login
-        public AppUser? LoggedInUser { get; private set; }
-
         public ICommand LoginCommand { get; }
+
+        // Raised on the UI thread after successful authentication
+        public event EventHandler<AppUser>? LoginSucceeded;
 
         public LoginViewModel()
         {
-            LoginCommand = new RelayCommand(async () => await LoginAsync(),
-                                            () => !IsLoggingIn);
+            LoginCommand = new RelayCommand(
+                async () => await LoginAsync(),
+                () => !IsLoggingIn);
         }
 
         public void LoadLicence()
         {
             BusinessName = LicenceService.BusinessName;
-            if (!LicenceService.IsValid)
-            {
-                IsLicenceExpired = true;
-                LicenceMessage   = LicenceService.Message;
-            }
-            else
-            {
-                IsLicenceExpired = false;
-                LicenceMessage   = LicenceService.Message;
-            }
+            IsLicenceExpired = !LicenceService.IsValid;
+            LicenceMessage   = LicenceService.Message;
         }
 
         private async Task LoginAsync()
@@ -103,39 +116,59 @@ namespace MarriageBureau.ViewModels
             IsLoggingIn  = true;
             ErrorMessage = string.Empty;
 
+            AppUser? loggedInUser = null;
+            string?  errorMsg    = null;
+
             try
             {
+                // Run DB work on a thread-pool thread; capture results in locals
+                string capturedUsername = Username.Trim();
+                string capturedPassword = Password;
+
                 await Task.Run(() =>
                 {
-                    using var ctx = new AppDbContext();
-                    var user = ctx.AppUsers
-                                  .AsNoTracking()
-                                  .FirstOrDefault(u =>
-                                      u.Username == Username.Trim() &&
-                                      u.IsActive);
-
-                    if (user == null)
+                    try
                     {
-                        ErrorMessage = "Invalid username or password.";
-                        return;
-                    }
+                        using var ctx = new AppDbContext();
 
-                    if (!CryptoService.VerifyPassword(Password, user.PasswordHash))
+                        var user = ctx.AppUsers
+                                      .FirstOrDefault(u =>
+                                          u.Username == capturedUsername &&
+                                          u.IsActive);
+
+                        if (user == null)
+                        {
+                            errorMsg = "Invalid username or password.";
+                            return;
+                        }
+
+                        if (!CryptoService.VerifyPassword(capturedPassword, user.PasswordHash))
+                        {
+                            errorMsg = "Invalid username or password.";
+                            return;
+                        }
+
+                        // Update last-login timestamp
+                        user.LastLogin = DateTime.Now;
+                        ctx.SaveChanges();
+
+                        loggedInUser = user;
+                    }
+                    catch (Exception ex)
                     {
-                        ErrorMessage = "Invalid username or password.";
-                        return;
+                        errorMsg = $"Login failed: {ex.Message}";
                     }
-
-                    // Update last login timestamp
-                    var tracked = ctx.AppUsers.Find(user.Id)!;
-                    tracked.LastLogin = DateTime.Now;
-                    ctx.SaveChanges();
-
-                    LoggedInUser = user;
                 });
 
-                if (LoggedInUser != null)
-                    LoginSucceeded?.Invoke(this, LoggedInUser);
+                // Back on UI thread — safe to touch bound properties
+                if (errorMsg != null)
+                {
+                    ErrorMessage = errorMsg;
+                    return;
+                }
+
+                if (loggedInUser != null)
+                    LoginSucceeded?.Invoke(this, loggedInUser);
             }
             catch (Exception ex)
             {
@@ -146,8 +179,5 @@ namespace MarriageBureau.ViewModels
                 IsLoggingIn = false;
             }
         }
-
-        /// <summary>Raised when the user has been authenticated successfully.</summary>
-        public event EventHandler<AppUser>? LoginSucceeded;
     }
 }

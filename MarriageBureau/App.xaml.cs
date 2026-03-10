@@ -11,10 +11,13 @@ namespace MarriageBureau
         {
             base.OnStartup(e);
 
+            // Prevent WPF from shutting down when LoginWindow closes
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
             // Ensure database, tables, and seed data exist
             AppDbContext.EnsureCreated();
 
-            // Validate licence before showing login
+            // Validate licence once here (LoginWindow uses LicenceService.IsValid directly)
             LicenceService.Validate();
 
             // Show login window
@@ -23,14 +26,15 @@ namespace MarriageBureau
 
             if (result != true || loginWindow.LoggedInUser == null)
             {
-                // User cancelled or login failed – shut down
+                // User cancelled, closed window, or login failed — shut down
                 Shutdown();
                 return;
             }
 
-            // Store logged-in user in application resources for global access
+            // Switch shutdown mode back to normal now that main window will own the app lifetime
+            ShutdownMode = ShutdownMode.OnMainWindowClose;
+
             var user = loginWindow.LoggedInUser;
-            Resources["CurrentUser"] = user;
 
             // Launch main window
             var mainWindow = new MainWindow(user);

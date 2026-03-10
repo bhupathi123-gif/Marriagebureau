@@ -1,6 +1,5 @@
 using System.Windows;
 using MarriageBureau.Models;
-using MarriageBureau.Services;
 using MarriageBureau.ViewModels;
 
 namespace MarriageBureau.Views
@@ -15,9 +14,7 @@ namespace MarriageBureau.Views
         {
             InitializeComponent();
 
-            // Validate licence before showing login
-            LicenceService.Validate();
-
+            // LicenceService is already validated in App.xaml.cs – just load state
             _vm = new LoginViewModel();
             _vm.LoadLicence();
             _vm.LoginSucceeded += OnLoginSucceeded;
@@ -33,8 +30,9 @@ namespace MarriageBureau.Views
 
         private void OnLoginSucceeded(object? sender, AppUser user)
         {
+            // This event is raised from the UI thread (see LoginViewModel)
             LoggedInUser = user;
-            DialogResult = true;
+            DialogResult = true;   // closes the dialog and returns true to ShowDialog()
             Close();
         }
     }
