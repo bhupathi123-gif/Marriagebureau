@@ -149,6 +149,7 @@ namespace MarriageBureau.ViewModels
         public List<string> GenderOptions    { get; } = new() { "MALE", "FEMALE" };
         public List<string> ComplexionOptions { get; } = new() { "FAIR", "VERY FAIR", "WHITE", "MEDIUM", "RED", "DARK", "WHEATISH" };
         public List<string> RasiOptions      { get; } = new() { "MESHA", "VRUSHABA", "MIDHUNA", "KARKATAKA", "SIMHA", "KANYA", "TULA", "VRUCHIKA", "DHANU", "MAKARA", "KUMBHA", "MEENA" };
+        public List<ProfileStatus> StatusOptions { get; } = Enum.GetValues<ProfileStatus>().ToList();
 
         // ── Commands ─────────────────────────────────────────────────
 
@@ -564,6 +565,7 @@ namespace MarriageBureau.ViewModels
             Name                    = src.Name,
             Caste                   = src.Caste,
             Gender                  = src.Gender,
+            Status                  = src.Status,
             DateOfBirth             = src.DateOfBirth,
             TimeOfBirth             = src.TimeOfBirth,
             AmPm                    = src.AmPm,

@@ -33,7 +33,7 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- ═══ Left Navigation Panel ═══════════════════════════════════ -->
+        <!-- ═══ Left Navigation Panel ══════════════════════════════ -->
         <DockPanel Grid.Column="0" Background="#4A148C" LastChildFill="True">
 
             <!-- App Title -->
@@ -45,7 +45,7 @@
                            TextAlignment="Center" Margin="10,0"/>
                 <TextBlock Text="Management System" Foreground="#CE93D8"
                            FontSize="11" HorizontalAlignment="Center"
-                           Margin="10,2,10,15"/>
+                           Margin="10,2,10,10"/>
                 <Separator Background="#7B1FA2"/>
             </StackPanel>
 
@@ -106,19 +106,41 @@
                         <TextBlock Text="Export Biodata" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
+
+                <Separator Background="#7B1FA2" Margin="4,8"/>
+
+                <Button x:Name="BtnSettings"
+                        Command="{Binding NavigateSettingsCommand}"
+                        Style="{StaticResource NavButtonStyle}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Cog" Width="20" Height="20" Margin="0,0,12,0"/>
+                        <TextBlock Text="Settings" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
 
-            <!-- Bottom Info -->
-            <StackPanel DockPanel.Dock="Bottom" Margin="10,15">
+            <!-- Bottom: logged-in user info -->
+            <StackPanel DockPanel.Dock="Bottom" Margin="10,12">
                 <Separator Background="#7B1FA2" Margin="0,0,0,10"/>
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="AccountCircle" Width="22" Height="22"
+                                             Foreground="#CE93D8" Margin="0,0,6,0"
+                                             VerticalAlignment="Center"/>
+                    <StackPanel>
+                        <TextBlock x:Name="UserNameText" Foreground="White"
+                                   FontSize="12" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="UserRoleText" Foreground="#CE93D8"
+                                   FontSize="10"/>
+                    </StackPanel>
+                </StackPanel>
                 <TextBlock Text="© 2025 Marriage Bureau" Foreground="#CE93D8"
-                           FontSize="10" HorizontalAlignment="Center"/>
+                           FontSize="10" HorizontalAlignment="Center" Margin="0,8,0,0"/>
             </StackPanel>
 
             <Border/>
         </DockPanel>
 
-        <!-- ═══ Main Content Area ════════════════════════════════════════ -->
+        <!-- ═══ Main Content Area ════════════════════════════════════ -->
         <Grid Grid.Column="1">
             <Frame x:Name="MainFrame"
                    NavigationUIVisibility="Hidden"

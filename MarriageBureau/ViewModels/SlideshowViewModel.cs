@@ -28,6 +28,7 @@ namespace MarriageBureau.ViewModels
         private string _districtFilter = string.Empty;
         private string _starFilter     = "All";
         private string _raasiFilter    = "All";
+        private string _statusFilter   = "All";
         private int    _minAge         = 18;
         private int    _maxAge         = 50;
         private bool   _filterPanelOpen = false;
@@ -164,6 +165,12 @@ namespace MarriageBureau.ViewModels
             set { SetProperty(ref _raasiFilter, value); _ = LoadAsync(); }
         }
 
+        public string StatusFilter
+        {
+            get => _statusFilter;
+            set { SetProperty(ref _statusFilter, value); _ = LoadAsync(); }
+        }
+
         public int MinAge
         {
             get => _minAge;
@@ -185,6 +192,8 @@ namespace MarriageBureau.ViewModels
         // ── Option Lists ─────────────────────────────────────────────
 
         public List<string> GenderOptions  { get; } = new() { "All", "MALE", "FEMALE" };
+        public List<string> StatusOptions  { get; } = new List<string> { "All" }
+            .Concat(Enum.GetNames<ProfileStatus>()).ToList();
 
         public static readonly List<string> StarOptions = new()
         {
@@ -220,6 +229,7 @@ namespace MarriageBureau.ViewModels
             !string.IsNullOrWhiteSpace(DistrictFilter) ||
             StarFilter     != "All" ||
             RaasiFilter    != "All" ||
+            StatusFilter   != "All" ||
             MinAge         != 18    ||
             MaxAge         != 50;
 
@@ -307,6 +317,9 @@ namespace MarriageBureau.ViewModels
                 if (RaasiFilter != "All")
                     q = q.Where(b => b.Raasi?.ToUpper() == RaasiFilter.ToUpper());
 
+                if (StatusFilter != "All" && Enum.TryParse<ProfileStatus>(StatusFilter, out var statusEnum))
+                    q = q.Where(b => b.Status == statusEnum);
+
                 // Age filter
                 q = q.Where(b =>
                 {
@@ -336,6 +349,7 @@ namespace MarriageBureau.ViewModels
             _districtFilter = string.Empty;
             _starFilter     = "All";
             _raasiFilter    = "All";
+            _statusFilter   = "All";
             _minAge         = 18;
             _maxAge         = 50;
 
@@ -344,6 +358,7 @@ namespace MarriageBureau.ViewModels
             OnPropertyChanged(nameof(DistrictFilter));
             OnPropertyChanged(nameof(StarFilter));
             OnPropertyChanged(nameof(RaasiFilter));
+            OnPropertyChanged(nameof(StatusFilter));
             OnPropertyChanged(nameof(MinAge));
             OnPropertyChanged(nameof(MaxAge));
             OnPropertyChanged(nameof(HasActiveFilters));

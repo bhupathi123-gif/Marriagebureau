@@ -72,14 +72,15 @@
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="160"/>
-                    <ColumnDefinition Width="160"/>
+                    <ColumnDefinition Width="140"/>
+                    <ColumnDefinition Width="140"/>
+                    <ColumnDefinition Width="140"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <TextBox Grid.Column="0"
                          Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                         materialDesign:HintAssist.Hint="🔍  Search by name, phone, caste, district, qualification..."
+                         materialDesign:HintAssist.Hint="🔍  Search by name, phone, caste, district..."
                          Style="{StaticResource MaterialDesignOutlinedTextBox}"
                          Margin="0,0,8,0"/>
 
@@ -96,7 +97,14 @@
                          Style="{StaticResource MaterialDesignOutlinedTextBox}"
                          Margin="0,0,8,0"/>
 
-                <Button Grid.Column="3" Command="{Binding ClearSearchCommand}"
+                <ComboBox Grid.Column="3"
+                          ItemsSource="{Binding StatusOptions}"
+                          SelectedItem="{Binding StatusFilter}"
+                          materialDesign:HintAssist.Hint="Status"
+                          Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                          Margin="0,0,8,0"/>
+
+                <Button Grid.Column="4" Command="{Binding ClearSearchCommand}"
                         Style="{StaticResource MaterialDesignOutlinedButton}"
                         ToolTip="Clear Filters">
                     <materialDesign:PackIcon Kind="FilterRemove"/>
@@ -163,11 +171,25 @@
                         <DataGridTextColumn Header="Age"         Binding="{Binding AgeDisplay}"     Width="60"/>
                         <DataGridTextColumn Header="Height"      Binding="{Binding Height}"         Width="75"/>
                         <DataGridTextColumn Header="Qualification" Binding="{Binding Qualification}" Width="*" MinWidth="130"/>
-                        <DataGridTextColumn Header="Designation" Binding="{Binding Designation}"   Width="*" MinWidth="120"/>
                         <DataGridTextColumn Header="Birth Star"  Binding="{Binding BirthStar}"     Width="90"/>
                         <DataGridTextColumn Header="Raasi"       Binding="{Binding Raasi}"          Width="90"/>
                         <DataGridTextColumn Header="District"    Binding="{Binding District}"       Width="110"/>
                         <DataGridTextColumn Header="Phone"       Binding="{Binding Phone1}"         Width="115"/>
+
+                        <!-- Status column with coloured badge -->
+                        <DataGridTemplateColumn Header="Status" Width="90">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border CornerRadius="8" Padding="6,2" Margin="2"
+                                            Background="{Binding StatusColor}">
+                                        <TextBlock Text="{Binding StatusDisplay}"
+                                                   Foreground="White" FontSize="10"
+                                                   FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center"/>
+                                    </Border>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
 
                         <!-- PDF indicator -->
                         <DataGridTemplateColumn Header="PDF" Width="48">

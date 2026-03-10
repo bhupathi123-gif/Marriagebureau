@@ -11,10 +11,11 @@ namespace MarriageBureau.ViewModels
         private ObservableCollection<Biodata> _allProfiles = new();
         private ObservableCollection<Biodata> _filteredProfiles = new();
         private Biodata? _selectedProfile;
-        private string _searchText = string.Empty;
+        private string _searchText   = string.Empty;
         private string _genderFilter = "All";
-        private string _casteFilter = string.Empty;
-        private bool _isLoading;
+        private string _casteFilter  = string.Empty;
+        private string _statusFilter = "All";
+        private bool   _isLoading;
 
         private readonly MainViewModel _mainVm;
 
@@ -52,26 +53,35 @@ namespace MarriageBureau.ViewModels
             set { SetProperty(ref _casteFilter, value); ApplyFilter(); }
         }
 
+        public string StatusFilter
+        {
+            get => _statusFilter;
+            set { SetProperty(ref _statusFilter, value); ApplyFilter(); }
+        }
+
         public bool IsLoading
         {
             get => _isLoading;
             set => SetProperty(ref _isLoading, value);
         }
 
-        public int TotalCount => _allProfiles.Count;
-        public int MaleCount => _allProfiles.Count(p => p.Gender?.ToUpper() == "MALE");
-        public int FemaleCount => _allProfiles.Count(p => p.Gender?.ToUpper() == "FEMALE");
+        public int TotalCount    => _allProfiles.Count;
+        public int MaleCount     => _allProfiles.Count(p => p.Gender?.ToUpper() == "MALE");
+        public int FemaleCount   => _allProfiles.Count(p => p.Gender?.ToUpper() == "FEMALE");
         public int FilteredCount => FilteredProfiles.Count;
 
-        public ICommand RefreshCommand { get; }
-        public ICommand AddNewCommand { get; }
-        public ICommand EditCommand { get; }
-        public ICommand DeleteCommand { get; }
-        public ICommand ViewPdfCommand { get; }
-        public ICommand ClearSearchCommand { get; }
-        public ICommand ImportExcelCommand { get; }
-        public ICommand ExportCommand { get; }
+        public ICommand RefreshCommand      { get; }
+        public ICommand AddNewCommand       { get; }
+        public ICommand EditCommand         { get; }
+        public ICommand DeleteCommand       { get; }
+        public ICommand ViewPdfCommand      { get; }
+        public ICommand ClearSearchCommand  { get; }
+        public ICommand ImportExcelCommand  { get; }
+        public ICommand ExportCommand       { get; }
+
         public List<string> GenderOptions { get; } = new() { "All", "MALE", "FEMALE" };
+        public List<string> StatusOptions { get; } = new() { "All" }
+            .Concat(Enum.GetNames<ProfileStatus>()).ToList();
 
         public BrowseViewModel(MainViewModel mainVm)
         {
@@ -130,6 +140,9 @@ namespace MarriageBureau.ViewModels
             if (!string.IsNullOrWhiteSpace(CasteFilter))
                 q = q.Where(p => p.Caste?.ToLower().Contains(CasteFilter.ToLower()) ?? false);
 
+            if (StatusFilter != "All" && Enum.TryParse<ProfileStatus>(StatusFilter, out var statusEnum))
+                q = q.Where(p => p.Status == statusEnum);
+
             FilteredProfiles = new ObservableCollection<Biodata>(q);
             OnPropertyChanged(nameof(FilteredCount));
         }
@@ -178,6 +191,7 @@ namespace MarriageBureau.ViewModels
             SearchText   = string.Empty;
             GenderFilter = "All";
             CasteFilter  = string.Empty;
+            StatusFilter = "All";
         }
     }
 }

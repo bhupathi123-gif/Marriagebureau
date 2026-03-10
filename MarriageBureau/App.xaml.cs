@@ -1,5 +1,7 @@
 using System.Windows;
 using MarriageBureau.Data;
+using MarriageBureau.Services;
+using MarriageBureau.Views;
 
 namespace MarriageBureau
 {
@@ -9,8 +11,31 @@ namespace MarriageBureau
         {
             base.OnStartup(e);
 
-            // Ensure database is created and all tables exist (including new BiodataPhotos)
+            // Ensure database, tables, and seed data exist
             AppDbContext.EnsureCreated();
+
+            // Validate licence before showing login
+            LicenceService.Validate();
+
+            // Show login window
+            var loginWindow = new LoginWindow();
+            bool? result = loginWindow.ShowDialog();
+
+            if (result != true || loginWindow.LoggedInUser == null)
+            {
+                // User cancelled or login failed – shut down
+                Shutdown();
+                return;
+            }
+
+            // Store logged-in user in application resources for global access
+            var user = loginWindow.LoggedInUser;
+            Resources["CurrentUser"] = user;
+
+            // Launch main window
+            var mainWindow = new MainWindow(user);
+            MainWindow = mainWindow;
+            mainWindow.Show();
         }
     }
 }

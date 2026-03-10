@@ -1,0 +1,325 @@
+<Page x:Class="MarriageBureau.Views.SettingsView"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+      xmlns:converters="clr-namespace:MarriageBureau.Converters"
+      Background="{DynamicResource MaterialDesignPaper}"
+      Title="Settings">
+
+    <Page.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <converters:NullToVisibilityConverter x:Key="NullToVis"/>
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize"   Value="15"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#4A148C"/>
+            <Setter Property="Margin"     Value="0,0,0,10"/>
+        </Style>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize"   Value="12"/>
+            <Setter Property="Foreground" Value="#5E35B1"/>
+            <Setter Property="Margin"     Value="0,0,0,4"/>
+        </Style>
+    </Page.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ═══ Header ═══════════════════════════════════════════════ -->
+        <Border Grid.Row="0" Background="#4A148C" Padding="20,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Cog" Width="28" Height="28"
+                                                 Foreground="#CE93D8" Margin="0,0,10,0"
+                                                 VerticalAlignment="Center"/>
+                        <TextBlock Text="Application Settings" FontSize="22"
+                                   FontWeight="Bold" Foreground="White"/>
+                    </StackPanel>
+                    <TextBlock Text="Business configuration, security code, and user management"
+                               FontSize="12" Foreground="#CE93D8" Margin="38,2,0,0"/>
+                </StackPanel>
+                <Button Grid.Column="1" Command="{Binding CancelCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Foreground="White" BorderBrush="White">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="ArrowLeft" Margin="0,0,6,0"/>
+                        <TextBlock Text="Back"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- ═══ Main Content ════════════════════════════════════════ -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24,20,24,32">
+
+                <!-- ── Business Name ──────────────────────────────── -->
+                <materialDesign:Card Padding="20" UniformCornerRadius="10" Margin="0,0,0,16"
+                                     materialDesign:ElevationAssist.Elevation="Dp2">
+                    <StackPanel>
+                        <TextBlock Text="🏢  Business Name" Style="{StaticResource SectionTitle}"/>
+                        <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="Gray" Margin="0,0,0,12">
+                            The business name is stored encrypted in the database and displayed on
+                            exported biodata PDFs and images as a watermark.
+                        </TextBlock>
+
+                        <TextBlock Text="Business Name" Style="{StaticResource FieldLabel}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding BusinessName, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="e.g. Sri Lakshmi Marriage Bureau"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     Margin="0,0,10,0"
+                                     IsEnabled="{Binding IsAdmin}"/>
+                            <Button Grid.Column="1" Command="{Binding SaveBusinessNameCommand}"
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Background="#4A148C"
+                                    IsEnabled="{Binding IsAdmin}">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="ContentSave" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Save &amp; Encrypt"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+
+                        <TextBlock Text="{Binding SettingsStatus}" Foreground="#2E7D32"
+                                   FontSize="11" Margin="0,8,0,0"
+                                   Visibility="{Binding SettingsStatus, Converter={StaticResource NullToVis}}"/>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- ── Security Code ──────────────────────────────── -->
+                <materialDesign:Card Padding="20" UniformCornerRadius="10" Margin="0,0,0,16"
+                                     materialDesign:ElevationAssist.Elevation="Dp2">
+                    <StackPanel>
+                        <TextBlock Text="🔑  Security / Licence Code" Style="{StaticResource SectionTitle}"/>
+                        <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="Gray" Margin="0,0,0,12">
+                            Paste the encrypted security code provided by the administrator.
+                            The code embeds the business name and expiry date.
+                            After the expiry date the application will show a renewal prompt.
+                        </TextBlock>
+
+                        <TextBlock Text="Security Code" Style="{StaticResource FieldLabel}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding SecurityCode, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Paste encrypted security code here"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     Margin="0,0,10,0"
+                                     IsEnabled="{Binding IsAdmin}"/>
+                            <Button Grid.Column="1" Command="{Binding ApplySecurityCodeCommand}"
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Background="#1565C0"
+                                    IsEnabled="{Binding IsAdmin}">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="ShieldCheck" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Apply Code"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+
+                        <!-- Code status -->
+                        <Border Margin="0,8,0,0" CornerRadius="6" Padding="10,6">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#E8F5E9"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CodeValid}" Value="False">
+                                            <Setter Property="Background" Value="#FFEBEE"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock Text="{Binding CodeStatus}" FontSize="11"
+                                       TextWrapping="Wrap">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#2E7D32"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding CodeValid}" Value="False">
+                                                <Setter Property="Foreground" Value="Crimson"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Border>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- ── User Management (Admin only) ───────────────── -->
+                <materialDesign:Card Padding="20" UniformCornerRadius="10" Margin="0,0,0,16"
+                                     materialDesign:ElevationAssist.Elevation="Dp2"
+                                     Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}">
+                    <StackPanel>
+                        <TextBlock Text="👥  User Management" Style="{StaticResource SectionTitle}"/>
+
+                        <!-- Users list -->
+                        <DataGrid ItemsSource="{Binding Users}"
+                                  SelectedItem="{Binding SelectedUser, Mode=TwoWay}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  CanUserSortColumns="True"
+                                  SelectionMode="Single"
+                                  CanUserResizeRows="False"
+                                  HeadersVisibility="Column"
+                                  BorderThickness="1"
+                                  BorderBrush="#E0E0E0"
+                                  MaxHeight="200"
+                                  Margin="0,0,0,12"
+                                  materialDesign:DataGridAssist.CellPadding="8,4">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="*"/>
+                                <DataGridTextColumn Header="Full Name" Binding="{Binding FullName}" Width="*"/>
+                                <DataGridTextColumn Header="Role" Binding="{Binding Role}" Width="80"/>
+                                <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}" Width="60"/>
+                                <DataGridTextColumn Header="Last Login"
+                                    Binding="{Binding LastLogin, StringFormat={}{0:dd-MMM-yyyy HH:mm}}"
+                                    Width="140"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <!-- User actions -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <Button Command="{Binding ToggleUserActiveCommand}"
+                                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                                    Margin="0,0,8,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="AccountOff" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Toggle Active"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding DeleteUserCommand}"
+                                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                                    Foreground="Crimson" BorderBrush="Crimson" Margin="0,0,8,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Delete" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Delete User"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding RefreshUsersCommand}"
+                                    Style="{StaticResource MaterialDesignOutlinedButton}">
+                                <materialDesign:PackIcon Kind="Refresh"/>
+                            </Button>
+                        </StackPanel>
+
+                        <!-- Add new user -->
+                        <TextBlock Text="Add New User" Style="{StaticResource FieldLabel}"
+                                   Margin="0,4,0,8"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="100"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding NewUsername, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Username"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     Margin="0,0,8,0"/>
+                            <PasswordBox x:Name="NewPwdBox"
+                                         Grid.Column="1"
+                                         materialDesign:HintAssist.Hint="Password"
+                                         Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                                         Margin="0,0,8,0"
+                                         PasswordChanged="NewPwdBox_PasswordChanged"/>
+                            <ComboBox Grid.Column="2"
+                                      ItemsSource="{Binding RoleOptions}"
+                                      SelectedItem="{Binding NewRole}"
+                                      materialDesign:HintAssist.Hint="Role"
+                                      Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                      Margin="0,0,8,0"/>
+                            <Button Grid.Column="3" Command="{Binding AddUserCommand}"
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Background="#2E7D32">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="AccountPlus" Margin="0,0,4,0"/>
+                                    <TextBlock Text="Add"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                        <TextBox Text="{Binding NewFullName, UpdateSourceTrigger=PropertyChanged}"
+                                 materialDesign:HintAssist.Hint="Full Name (optional)"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 Margin="0,8,0,0"/>
+
+                        <TextBlock Text="{Binding UserStatus}" FontSize="11" Margin="0,8,0,0"
+                                   Foreground="#2E7D32"
+                                   Visibility="{Binding UserStatus, Converter={StaticResource NullToVis}}"/>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- ── Change Password ─────────────────────────────── -->
+                <materialDesign:Card Padding="20" UniformCornerRadius="10" Margin="0,0,0,16"
+                                     materialDesign:ElevationAssist.Elevation="Dp2">
+                    <StackPanel>
+                        <TextBlock Text="🔒  Change Your Password" Style="{StaticResource SectionTitle}"/>
+
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <PasswordBox x:Name="OldPwdBox" Grid.Column="0"
+                                         materialDesign:HintAssist.Hint="Current Password"
+                                         Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                                         Margin="0,0,8,0"
+                                         PasswordChanged="OldPwdBox_PasswordChanged"/>
+                            <PasswordBox x:Name="NewPwd1Box" Grid.Column="1"
+                                         materialDesign:HintAssist.Hint="New Password"
+                                         Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                                         Margin="0,0,8,0"
+                                         PasswordChanged="NewPwd1Box_PasswordChanged"/>
+                            <PasswordBox x:Name="NewPwd2Box" Grid.Column="2"
+                                         materialDesign:HintAssist.Hint="Confirm New Password"
+                                         Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                                         Margin="0,0,8,0"
+                                         PasswordChanged="NewPwd2Box_PasswordChanged"/>
+                            <Button Grid.Column="3" Command="{Binding ChangePasswordCommand}"
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Background="#4A148C">
+                                <TextBlock Text="Change Password"/>
+                            </Button>
+                        </Grid>
+
+                        <TextBlock Text="{Binding PwdStatus}" FontSize="11"
+                                   Visibility="{Binding PwdStatus, Converter={StaticResource NullToVis}}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#2E7D32"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding PwdStatus}"
+                                                     Value="Current password is incorrect.">
+                                            <Setter Property="Foreground" Value="Crimson"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </materialDesign:Card>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

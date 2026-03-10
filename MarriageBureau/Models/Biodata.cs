@@ -5,6 +5,17 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MarriageBureau.Models
 {
+    /// <summary>Current status of a biodata profile.</summary>
+    public enum ProfileStatus
+    {
+        Active,
+        Inactive,
+        Married,
+        Engaged,
+        OnHold,
+        Closed
+    }
+
     public class Biodata
     {
         [Key]
@@ -72,6 +83,10 @@ namespace MarriageBureau.Models
         // ─── Partner Expectations ─────────────────────────────────────────
         public string? ExpectationsFromPartner { get; set; }
 
+        // ─── Profile Status ───────────────────────────────────────────────
+        /// <summary>Current lifecycle status of the profile (Active / Inactive / Married / Engaged / OnHold / Closed)</summary>
+        public ProfileStatus Status { get; set; } = ProfileStatus.Active;
+
         // ─── Files ────────────────────────────────────────────────────────
         /// <summary>Primary / cover photo path (kept for backward compat and quick access)</summary>
         public string? PhotoPath { get; set; }
@@ -98,7 +113,6 @@ namespace MarriageBureau.Models
                 if (string.IsNullOrWhiteSpace(DateOfBirth)) return "N/A";
                 try
                 {
-                    // Try to parse various date formats
                     if (DateTime.TryParse(DateOfBirth.Replace(" ", "-"), out var dob))
                     {
                         var age = DateTime.Today.Year - dob.Year;
@@ -134,5 +148,22 @@ namespace MarriageBureau.Models
                 return null;
             }
         }
+
+        /// <summary>Status display label with colour hint</summary>
+        [NotMapped]
+        public string StatusDisplay => Status.ToString();
+
+        /// <summary>Badge colour for the status pill</summary>
+        [NotMapped]
+        public string StatusColor => Status switch
+        {
+            ProfileStatus.Active   => "#2E7D32",   // green
+            ProfileStatus.Inactive => "#757575",   // grey
+            ProfileStatus.Married  => "#1565C0",   // blue
+            ProfileStatus.Engaged  => "#6A1B9A",   // purple
+            ProfileStatus.OnHold   => "#E65100",   // orange
+            ProfileStatus.Closed   => "#B71C1C",   // red
+            _                      => "#757575"
+        };
     }
 }

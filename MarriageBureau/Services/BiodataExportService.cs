@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using MarriageBureau.Models;
+using MarriageBureau.Services;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -12,12 +13,12 @@ namespace MarriageBureau.Services
     /// <summary>
     /// Generates a professional marriage biodata card as PDF and/or PNG image.
     /// Layout: header with name+gender badge, two photos side-by-side, then all detail sections.
+    /// A diagonal watermark with the business name is drawn on the page.
     /// </summary>
     public static class BiodataExportService
     {
         static BiodataExportService()
         {
-            // QuestPDF community licence (free for open-source / personal use)
             QuestPDF.Settings.License = LicenseType.Community;
         }
 
@@ -26,6 +27,7 @@ namespace MarriageBureau.Services
         /// <summary>Generates and saves a PDF biodata card to <paramref name="outputPath"/>.</summary>
         public static void ExportToPdf(Biodata profile, List<string> photoPaths, string outputPath)
         {
+            var businessName = LicenceService.BusinessName;
             var doc = Document.Create(container =>
             {
                 container.Page(page =>
@@ -33,16 +35,18 @@ namespace MarriageBureau.Services
                     page.Size(PageSizes.A4);
                     page.Margin(24, Unit.Point);
                     page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial"));
-                    page.Content().Element(c => ComposeBiodata(c, profile, photoPaths));
+                    page.Content().Element(c => ComposeBiodata(c, profile, photoPaths, businessName));
+                    page.Foreground().Canvas((canvas, size) =>
+                        DrawWatermark(canvas, size, businessName));
                 });
             });
             doc.GeneratePdf(outputPath);
         }
 
-        /// <summary>Renders the first page of the PDF as a PNG image.</summary>
+        /// <summary>Renders the first page of the PDF as a PNG/JPEG image.</summary>
         public static void ExportToImage(Biodata profile, List<string> photoPaths, string outputPath)
         {
-            // Render a PDF first, then grab the first page image
+            var businessName = LicenceService.BusinessName;
             var doc = Document.Create(container =>
             {
                 container.Page(page =>
@@ -50,11 +54,12 @@ namespace MarriageBureau.Services
                     page.Size(PageSizes.A4);
                     page.Margin(24, Unit.Point);
                     page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial"));
-                    page.Content().Element(c => ComposeBiodata(c, profile, photoPaths));
+                    page.Content().Element(c => ComposeBiodata(c, profile, photoPaths, businessName));
+                    page.Foreground().Canvas((canvas, size) =>
+                        DrawWatermark(canvas, size, businessName));
                 });
             });
 
-            // QuestPDF can produce images per page
             var images = doc.GenerateImages(new ImageGenerationSettings
             {
                 RasterDpi = 150,
@@ -63,31 +68,74 @@ namespace MarriageBureau.Services
             });
 
             if (images.Any())
-            {
                 File.WriteAllBytes(outputPath, images.First());
-            }
+        }
+
+        // ── Watermark ───────────────────────────────────────────────────────
+
+        private static void DrawWatermark(
+            SkiaSharp.SKCanvas canvas,
+            QuestPDF.Infrastructure.Size size,
+            string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return;
+
+            using var paint = new SkiaSharp.SKPaint
+            {
+                Color       = new SkiaSharp.SKColor(160, 120, 200, 35),   // semi-transparent purple
+                TextSize    = 48,
+                IsAntialias = true,
+                Typeface    = SkiaSharp.SKTypeface.FromFamilyName(
+                    "Arial",
+                    SkiaSharp.SKFontStyle.Bold),
+                TextAlign = SkiaSharp.SKTextAlign.Center
+            };
+
+            float cx = size.Width  / 2f;
+            float cy = size.Height / 2f;
+
+            canvas.Save();
+            canvas.Translate(cx, cy);
+            canvas.RotateDegrees(-35);
+
+            // Draw the text three times (top, middle, bottom) for a tiled feel
+            canvas.DrawText(text, 0, -size.Height * 0.25f, paint);
+            canvas.DrawText(text, 0,  0,                   paint);
+            canvas.DrawText(text, 0,  size.Height * 0.25f, paint);
+
+            canvas.Restore();
         }
 
         // ── Layout Builder ──────────────────────────────────────────────────
 
-        private static void ComposeBiodata(IContainer root, Biodata p, List<string> photos)
+        private static void ComposeBiodata(
+            IContainer root, Biodata p, List<string> photos, string businessName)
         {
-            bool isFemale = p.Gender?.ToUpper() == "FEMALE";
-            var accentColor = isFemale
+            bool isFemale    = p.Gender?.ToUpper() == "FEMALE";
+            var  accentColor = isFemale
                 ? QuestPDF.Helpers.Colors.Pink.Darken3
                 : QuestPDF.Helpers.Colors.Blue.Darken3;
-
-            var lightAccent = isFemale
+            var  lightAccent = isFemale
                 ? QuestPDF.Helpers.Colors.Pink.Lighten4
                 : QuestPDF.Helpers.Colors.Blue.Lighten4;
 
             root.Column(col =>
             {
-                // ── Header banner ────────────────────────────────────────
+                // ── Header banner ─────────────────────────────────────────
                 col.Item().Background(accentColor).Padding(10).Row(row =>
                 {
                     row.RelativeItem().Column(hCol =>
                     {
+                        // Business name tag
+                        if (!string.IsNullOrWhiteSpace(businessName))
+                        {
+                            hCol.Item()
+                                .Text(businessName.ToUpper())
+                                .FontSize(8)
+                                .FontColor(QuestPDF.Helpers.Colors.White)
+                                .Italic();
+                        }
+
                         hCol.Item().Text("✦  Marriage Biodata  ✦")
                             .FontSize(7).FontColor(QuestPDF.Helpers.Colors.White).Italic();
                         hCol.Item().Text(p.Name.ToUpper())
@@ -98,22 +146,25 @@ namespace MarriageBureau.Services
                                 .PaddingHorizontal(3)
                               .Text(p.Gender?.ToUpper() ?? "")
                               .FontSize(8).FontColor(accentColor).Bold();
+
                             if (!string.IsNullOrWhiteSpace(p.AgeDisplay))
-                            {
                                 r2.AutoItem().PaddingLeft(8)
                                   .Text($"Age: {p.AgeDisplay}")
                                   .FontSize(8).FontColor(QuestPDF.Helpers.Colors.White);
-                            }
+
                             if (!string.IsNullOrWhiteSpace(p.Caste))
-                            {
                                 r2.AutoItem().PaddingLeft(8)
                                   .Text($"Caste: {p.Caste}")
                                   .FontSize(8).FontColor(QuestPDF.Helpers.Colors.White);
-                            }
+
+                            // Status badge
+                            r2.AutoItem().PaddingLeft(8)
+                              .Text($"Status: {p.Status}")
+                              .FontSize(8).FontColor(QuestPDF.Helpers.Colors.White);
                         });
                     });
 
-                    // OM / decorative symbol
+                    // OM symbol
                     row.AutoItem().AlignMiddle().AlignRight()
                        .Text("ॐ").FontSize(32)
                        .FontColor(QuestPDF.Helpers.Colors.White).Bold();
@@ -129,11 +180,11 @@ namespace MarriageBureau.Services
                 {
                     col.Item().Row(photoRow =>
                     {
-                        photoRow.RelativeItem(1);  // spacer
-                        AddPhotoBox(photoRow.ConstantItem(130), photo1, "Photo 1", accentColor);
-                        photoRow.ConstantItem(16); // gap
-                        AddPhotoBox(photoRow.ConstantItem(130), photo2, "Photo 2", accentColor);
-                        photoRow.RelativeItem(1);  // spacer
+                        photoRow.RelativeItem(1);
+                        AddPhotoBox(photoRow.FixedItem(130), photo1, "Photo 1", accentColor);
+                        photoRow.FixedItem(16);
+                        AddPhotoBox(photoRow.FixedItem(130), photo2, "Photo 2", accentColor);
+                        photoRow.RelativeItem(1);
                     });
                     col.Item().PaddingVertical(8);
                 }
@@ -167,7 +218,7 @@ namespace MarriageBureau.Services
                         DetailRow(left, "Company / Address", p.CompanyAddress);
                     });
 
-                    mainRow.ConstantItem(14);  // column gap
+                    mainRow.FixedItem(14);
 
                     // Right column
                     mainRow.RelativeItem().Column(right =>
@@ -197,7 +248,7 @@ namespace MarriageBureau.Services
                     });
                 });
 
-                // ── Expectations ──────────────────────────────────────────
+                // ── Expectations ─────────────────────────────────────────
                 if (!string.IsNullOrWhiteSpace(p.ExpectationsFromPartner))
                 {
                     col.Item().PaddingTop(8);
@@ -205,8 +256,7 @@ namespace MarriageBureau.Services
                     {
                         exp.Item().Text("Partner Expectations").Bold()
                            .FontSize(9).FontColor(accentColor);
-                        exp.Item().PaddingTop(2).Text(p.ExpectationsFromPartner)
-                           .FontSize(8);
+                        exp.Item().PaddingTop(2).Text(p.ExpectationsFromPartner).FontSize(8);
                     });
                 }
 
@@ -220,7 +270,9 @@ namespace MarriageBureau.Services
                              .Text($"Generated on {DateTime.Now:dd-MMM-yyyy}")
                              .FontSize(7).FontColor(QuestPDF.Helpers.Colors.Grey.Medium);
                        footer.RelativeItem().AlignRight()
-                             .Text("Marriage Bureau Management System")
+                             .Text(string.IsNullOrWhiteSpace(businessName)
+                                 ? "Marriage Bureau Management System"
+                                 : businessName)
                              .FontSize(7).FontColor(QuestPDF.Helpers.Colors.Grey.Medium);
                    });
             });
@@ -236,11 +288,7 @@ namespace MarriageBureau.Services
                 {
                     if (!string.IsNullOrWhiteSpace(photoPath) && File.Exists(photoPath))
                     {
-                        try
-                        {
-                            img.Image(photoPath).FitArea();
-                            return;
-                        }
+                        try { img.Image(photoPath).FitArea(); return; }
                         catch { }
                     }
                     img.AlignCenter().AlignMiddle()
@@ -255,9 +303,7 @@ namespace MarriageBureau.Services
 
         private static void SectionHeader(ColumnDescriptor col, string title, string color)
         {
-            col.Item()
-               .Background(color).PaddingHorizontal(4)
-                 .PaddingVertical(2)
+            col.Item().Background(color).Padding(4, 2)
                .Text(title).FontSize(9).Bold()
                .FontColor(QuestPDF.Helpers.Colors.White);
             col.Item().PaddingTop(3);
