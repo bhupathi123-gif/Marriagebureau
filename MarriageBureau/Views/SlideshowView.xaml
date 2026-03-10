@@ -32,23 +32,18 @@
             <Setter Property="Height" Value="44"/>
         </Style>
 
-        <!-- Photo dot indicator style -->
-        <Style x:Key="DotActive" TargetType="Ellipse">
-            <Setter Property="Width" Value="10"/>
-            <Setter Property="Height" Value="10"/>
-            <Setter Property="Fill" Value="White"/>
-            <Setter Property="Margin" Value="3,0"/>
-        </Style>
-        <Style x:Key="DotInactive" TargetType="Ellipse">
-            <Setter Property="Width" Value="8"/>
-            <Setter Property="Height" Value="8"/>
-            <Setter Property="Fill" Value="#88FFFFFF"/>
-            <Setter Property="Margin" Value="3,0"/>
+        <!-- Filter label style -->
+        <Style x:Key="FilterLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#CE93D8"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Margin" Value="0,0,0,3"/>
         </Style>
     </Page.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Advanced filter panel (collapsible) -->
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
@@ -62,8 +57,10 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
+                <!-- Title -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <materialDesign:PackIcon Kind="Slideshow" Foreground="#CE93D8"
                                              Width="24" Height="24" Margin="0,0,8,0"/>
@@ -71,30 +68,52 @@
                                FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
                 </StackPanel>
 
+                <!-- Gender filter + counter -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal"
                             HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <TextBlock Text="Filter: " Foreground="#CE93D8" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Text="Gender: " Foreground="#CE93D8" VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <ComboBox ItemsSource="{Binding GenderOptions}"
                               SelectedItem="{Binding GenderFilter}"
                               Foreground="White" Background="#4A148C"
                               BorderBrush="#7B1FA2"
-                              Width="120"/>
+                              Width="110"/>
                     <TextBlock Text="{Binding ProfileCounterText}" Foreground="#CE93D8"
-                               VerticalAlignment="Center" Margin="20,0,0,0" FontSize="14"/>
+                               VerticalAlignment="Center" Margin="16,0,0,0" FontSize="14"/>
+
+                    <!-- Active filter badge -->
+                    <Border Background="#F48FB1" CornerRadius="10" Padding="8,2" Margin="12,0,0,0"
+                            Visibility="{Binding HasActiveFilters, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="Filters Active" Foreground="#880E4F"
+                                   FontSize="11" FontWeight="Bold"/>
+                    </Border>
                 </StackPanel>
 
+                <!-- Interval slider -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,12,0">
-                    <TextBlock Text="Interval (s): " Foreground="#CE93D8"
-                               VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Text="Interval: " Foreground="#CE93D8"
+                               VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <Slider Value="{Binding SlideIntervalSeconds}" Minimum="2" Maximum="30"
-                            Width="100" VerticalAlignment="Center"
+                            Width="90" VerticalAlignment="Center"
                             TickFrequency="1" IsSnapToTickEnabled="True"
                             Foreground="#CE93D8"/>
                     <TextBlock Text="{Binding SlideIntervalSeconds}" Foreground="White"
-                               VerticalAlignment="Center" Margin="6,0,0,0" Width="24"/>
+                               VerticalAlignment="Center" Margin="5,0,2,0" Width="20"/>
+                    <TextBlock Text="s" Foreground="#CE93D8" VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <Button Grid.Column="3" Command="{Binding RefreshCommand}"
+                <!-- Filter toggle button -->
+                <Button Grid.Column="3" Command="{Binding ToggleFilterPanelCommand}"
+                        Style="{StaticResource MaterialDesignFlatButton}"
+                        Foreground="#CE93D8" ToolTip="Advanced Filters"
+                        Margin="0,0,4,0">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="FilterVariant" Width="20" Height="20"/>
+                        <TextBlock Text="Filters" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Refresh -->
+                <Button Grid.Column="4" Command="{Binding RefreshCommand}"
                         Style="{StaticResource MaterialDesignFlatButton}"
                         Foreground="#CE93D8" ToolTip="Refresh">
                     <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20"/>
@@ -102,8 +121,151 @@
             </Grid>
         </Border>
 
+        <!-- ═══ Advanced Filter Panel (collapsible) ══════════════════ -->
+        <Border Grid.Row="1" Background="#3D1A5E" Padding="16,12"
+                Visibility="{Binding FilterPanelOpen, Converter={StaticResource BoolToVis}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Caste filter -->
+                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                    <TextBlock Text="Caste" Style="{StaticResource FilterLabel}"/>
+                    <!--<ComboBox ItemsSource="{Binding CasteOptions}"
+                              SelectedItem="{Binding CasteFilter}"
+                              IsEditable="True"
+                              Foreground="White" Background="#55000000"
+                              BorderBrush="#7B1FA2"/>-->
+                    <ComboBox ItemsSource="{Binding CasteOptions}"
+              SelectedItem="{Binding CasteFilter}"
+              IsEditable="True"
+              Foreground="White"
+              Background="#55000000"
+              BorderBrush="#7B1FA2">
+
+                        <ComboBox.ItemContainerStyle>
+                            <Style TargetType="ComboBoxItem">
+                                <Setter Property="Foreground" Value="Black"/>
+                                <Setter Property="Background" Value="White"/>
+                                <Setter Property="Padding" Value="5"/>
+                                <Setter Property="FontSize" Value="13"/>
+                            </Style>
+                        </ComboBox.ItemContainerStyle>
+
+                    </ComboBox>
+                </StackPanel>
+
+                <!-- District filter -->
+                <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                    <TextBlock Text="District" Style="{StaticResource FilterLabel}"/>
+                    <ComboBox ItemsSource="{Binding DistrictOptions}"
+                              SelectedItem="{Binding DistrictFilter}"
+                             IsEditable="True"
+  Foreground="White"
+  Background="#55000000"
+  BorderBrush="#7B1FA2">
+
+                        <ComboBox.ItemContainerStyle>
+                            <Style TargetType="ComboBoxItem">
+                                <Setter Property="Foreground" Value="Black"/>
+                                <Setter Property="Background" Value="White"/>
+                                <Setter Property="Padding" Value="5"/>
+                                <Setter Property="FontSize" Value="13"/>
+                            </Style>
+                        </ComboBox.ItemContainerStyle>
+
+                    </ComboBox>
+                </StackPanel>
+
+                <!-- Birth Star filter -->
+                <StackPanel Grid.Column="2" Margin="0,0,12,0">
+                    <TextBlock Text="Birth Star" Style="{StaticResource FilterLabel}"/>
+                    <ComboBox ItemsSource="{x:Static vm:SlideshowViewModel.StarOptions}"
+                              xmlns:vm="clr-namespace:MarriageBureau.ViewModels"
+                              SelectedItem="{Binding StarFilter}"
+                               IsEditable="True"
+  Foreground="White"
+  Background="#55000000"
+  BorderBrush="#7B1FA2">
+
+                        <ComboBox.ItemContainerStyle>
+                            <Style TargetType="ComboBoxItem">
+                                <Setter Property="Foreground" Value="Black"/>
+                                <Setter Property="Background" Value="White"/>
+                                <Setter Property="Padding" Value="5"/>
+                                <Setter Property="FontSize" Value="13"/>
+                            </Style>
+                        </ComboBox.ItemContainerStyle>
+
+                    </ComboBox>
+                </StackPanel>
+
+                <!-- Raasi filter -->
+                <StackPanel Grid.Column="3" Margin="0,0,12,0">
+                    <TextBlock Text="Raasi" Style="{StaticResource FilterLabel}"/>
+                    <ComboBox ItemsSource="{x:Static vm:SlideshowViewModel.RaasiOptions}"
+                              xmlns:vm="clr-namespace:MarriageBureau.ViewModels"
+                              SelectedItem="{Binding RaasiFilter}"
+                                IsEditable="True"
+  Foreground="White"
+  Background="#55000000"
+  BorderBrush="#7B1FA2">
+
+                        <ComboBox.ItemContainerStyle>
+                            <Style TargetType="ComboBoxItem">
+                                <Setter Property="Foreground" Value="Black"/>
+                                <Setter Property="Background" Value="White"/>
+                                <Setter Property="Padding" Value="5"/>
+                                <Setter Property="FontSize" Value="13"/>
+                            </Style>
+                        </ComboBox.ItemContainerStyle>
+
+                    </ComboBox>
+                </StackPanel>
+
+                <!-- Age range -->
+                <StackPanel Grid.Column="4" Margin="0,0,12,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Age: " Style="{StaticResource FilterLabel}"/>
+                        <TextBlock Text="{Binding MinAge}" Foreground="White" FontSize="11" Margin="0,0,2,3"/>
+                        <TextBlock Text=" – " Foreground="#CE93D8" FontSize="11" Margin="0,0,2,3"/>
+                        <TextBlock Text="{Binding MaxAge}" Foreground="White" FontSize="11" Margin="0,0,0,3"/>
+                    </StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Slider Grid.Column="0" Value="{Binding MinAge}" Minimum="18" Maximum="70"
+                                TickFrequency="1" IsSnapToTickEnabled="True"
+                                Foreground="#CE93D8" Margin="0,0,4,0"/>
+                        <Slider Grid.Column="1" Value="{Binding MaxAge}" Minimum="18" Maximum="70"
+                                TickFrequency="1" IsSnapToTickEnabled="True"
+                                Foreground="#CE93D8"/>
+                    </Grid>
+                </StackPanel>
+
+                <!-- Clear filters button -->
+                <Button Grid.Column="5" Command="{Binding ClearFiltersCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Foreground="#F48FB1" BorderBrush="#F48FB1"
+                        VerticalAlignment="Bottom">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="FilterRemove" Width="16" Height="16" Margin="0,0,4,0"/>
+                        <TextBlock Text="Clear All"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
         <!-- ═══ Main Slide Content ═══════════════════════════════════ -->
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="2">
 
             <!-- Loading state -->
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
@@ -134,8 +296,14 @@
                                          Foreground="#CE93D8" HorizontalAlignment="Center"/>
                 <TextBlock Text="No profiles found" Foreground="#CE93D8"
                            FontSize="24" HorizontalAlignment="Center" Margin="0,12"/>
-                <TextBlock Text="Add some profiles to start the slideshow"
+                <TextBlock Text="Adjust your filters or add profiles to start the slideshow"
                            Foreground="#9E9E9E" HorizontalAlignment="Center"/>
+                <Button Command="{Binding ClearFiltersCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Foreground="#CE93D8" BorderBrush="#CE93D8"
+                        HorizontalAlignment="Center" Margin="0,12">
+                    <TextBlock Text="Clear Filters"/>
+                </Button>
             </StackPanel>
 
             <!-- Main Profile Slide -->
@@ -444,7 +612,7 @@
         </Grid>
 
         <!-- ═══ Bottom Playback Controls ═══════════════════════════ -->
-        <Border Grid.Row="2" Background="#2D0A4E" Padding="16,10">
+        <Border Grid.Row="3" Background="#2D0A4E" Padding="16,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>

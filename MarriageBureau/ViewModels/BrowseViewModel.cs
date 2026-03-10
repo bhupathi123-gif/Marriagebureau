@@ -70,6 +70,7 @@ namespace MarriageBureau.ViewModels
         public ICommand ViewPdfCommand { get; }
         public ICommand ClearSearchCommand { get; }
         public ICommand ImportExcelCommand { get; }
+        public ICommand ExportCommand { get; }
         public List<string> GenderOptions { get; } = new() { "All", "MALE", "FEMALE" };
 
         public BrowseViewModel(MainViewModel mainVm)
@@ -84,6 +85,8 @@ namespace MarriageBureau.ViewModels
             ViewPdfCommand     = new RelayCommand(OpenPdf, () => SelectedProfile?.HasPdf == true);
             ClearSearchCommand = new RelayCommand(ClearSearch);
             ImportExcelCommand = new RelayCommand(() => _mainVm.Navigate(AppPage.ExcelImport));
+            ExportCommand      = new RelayCommand(() => _mainVm.Navigate(AppPage.Export, SelectedProfile),
+                                                   () => SelectedProfile != null);
         }
 
         public async Task LoadAsync()

@@ -58,5 +58,11 @@ namespace MarriageBureau.Views
             var view = new ExcelImportView(_vm);
             MainFrame.Content = view;
         }
+
+        public void LoadExport(Biodata? biodata = null)
+        {
+            var view = new ExportView(_vm, biodata);
+            MainFrame.Content = view;
+        }
     }
 }

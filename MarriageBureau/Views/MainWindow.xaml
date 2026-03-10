@@ -97,6 +97,15 @@
                         <TextBlock Text="Import from Excel" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
+
+                <Button x:Name="BtnExport"
+                        Command="{Binding NavigateExportCommand}"
+                        Style="{StaticResource NavButtonStyle}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="FilePdfBox" Width="20" Height="20" Margin="0,0,12,0"/>
+                        <TextBlock Text="Export Biodata" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
 
             <!-- Bottom Info -->

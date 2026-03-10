@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using MarriageBureau.Data;
 using MarriageBureau.Models;
+using MarriageBureau.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace MarriageBureau.ViewModels
@@ -161,6 +162,8 @@ namespace MarriageBureau.ViewModels
         public ICommand UploadPdfCommand   { get; }
         public ICommand RemovePdfCommand   { get; }
         public ICommand ViewPdfCommand     { get; }
+        public ICommand ImportFromPdfCommand { get; }
+        public ICommand ExportCommand      { get; }
 
         public AddEditViewModel(MainViewModel mainVm, Biodata? existingBiodata = null)
         {
@@ -185,6 +188,10 @@ namespace MarriageBureau.ViewModels
             UploadPdfCommand     = new RelayCommand(UploadPdf);
             RemovePdfCommand     = new RelayCommand(RemovePdf, () => !string.IsNullOrWhiteSpace(Biodata.PdfPath));
             ViewPdfCommand       = new RelayCommand(OpenPdf, () => Biodata.HasPdf);
+            ImportFromPdfCommand = new RelayCommand(ImportFromPdf, () => !IsSaving);
+            ExportCommand        = new RelayCommand(
+                () => _mainVm.Navigate(AppPage.Export, Biodata),
+                () => IsEditMode);
         }
 
         // ── Photos ────────────────────────────────────────────────────
@@ -354,6 +361,125 @@ namespace MarriageBureau.ViewModels
                 {
                     System.Windows.MessageBox.Show($"Cannot open PDF: {ex.Message}");
                 }
+            }
+        }
+
+        private void ImportFromPdf()
+        {
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Title  = "Import Biodata from PDF",
+                Filter = "PDF Files|*.pdf",
+                Multiselect = false
+            };
+            if (dlg.ShowDialog() != true) return;
+
+            try
+            {
+                var (extracted, rawText) = PdfImportService.ExtractFromPdf(dlg.FileName);
+
+                // Ask user which fields to import (merge or replace)
+                var result = System.Windows.MessageBox.Show(
+                    $"Fields extracted from PDF:\n\n" +
+                    $"Name: {extracted.Name}\n" +
+                    $"Gender: {extracted.Gender}\n" +
+                    $"Caste: {extracted.Caste}\n" +
+                    $"D.O.B: {extracted.DateOfBirth}\n" +
+                    $"Qualification: {extracted.Qualification}\n" +
+                    $"Designation: {extracted.Designation}\n" +
+                    $"Phone: {extracted.Phone1}\n\n" +
+                    "Click YES to fill empty fields only (merge).\n" +
+                    "Click NO to replace all fields with PDF data.\n" +
+                    "Click CANCEL to abort.",
+                    "Import from PDF – Preview",
+                    System.Windows.MessageBoxButton.YesNoCancel,
+                    System.Windows.MessageBoxImage.Question);
+
+                if (result == System.Windows.MessageBoxResult.Cancel) return;
+
+                bool mergeOnly = result == System.Windows.MessageBoxResult.Yes;
+
+                // Apply extracted data
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.Name))
+                    Biodata.Name = extracted.Name ?? Biodata.Name;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.Gender))
+                    Biodata.Gender = extracted.Gender ?? Biodata.Gender;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.Caste))
+                    Biodata.Caste = extracted.Caste ?? Biodata.Caste;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.DateOfBirth))
+                    Biodata.DateOfBirth = extracted.DateOfBirth ?? Biodata.DateOfBirth;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.TimeOfBirth))
+                    Biodata.TimeOfBirth = extracted.TimeOfBirth ?? Biodata.TimeOfBirth;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.AmPm))
+                    Biodata.AmPm = extracted.AmPm ?? Biodata.AmPm;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.PlaceOfBirth))
+                    Biodata.PlaceOfBirth = extracted.PlaceOfBirth ?? Biodata.PlaceOfBirth;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.Height))
+                    Biodata.Height = extracted.Height ?? Biodata.Height;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.Complexion))
+                    Biodata.Complexion = extracted.Complexion ?? Biodata.Complexion;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.BirthStar))
+                    Biodata.BirthStar = extracted.BirthStar ?? Biodata.BirthStar;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.Padam))
+                    Biodata.Padam = extracted.Padam ?? Biodata.Padam;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.Raasi))
+                    Biodata.Raasi = extracted.Raasi ?? Biodata.Raasi;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.Religion))
+                    Biodata.Religion = extracted.Religion ?? Biodata.Religion;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.PaternalGotram))
+                    Biodata.PaternalGotram = extracted.PaternalGotram ?? Biodata.PaternalGotram;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.MaternalGotram))
+                    Biodata.MaternalGotram = extracted.MaternalGotram ?? Biodata.MaternalGotram;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.Qualification))
+                    Biodata.Qualification = extracted.Qualification ?? Biodata.Qualification;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.Designation))
+                    Biodata.Designation = extracted.Designation ?? Biodata.Designation;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.CompanyAddress))
+                    Biodata.CompanyAddress = extracted.CompanyAddress ?? Biodata.CompanyAddress;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.FatherName))
+                    Biodata.FatherName = extracted.FatherName ?? Biodata.FatherName;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.FatherOccupation))
+                    Biodata.FatherOccupation = extracted.FatherOccupation ?? Biodata.FatherOccupation;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.MotherName))
+                    Biodata.MotherName = extracted.MotherName ?? Biodata.MotherName;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.MotherOccupation))
+                    Biodata.MotherOccupation = extracted.MotherOccupation ?? Biodata.MotherOccupation;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.BrotherCount))
+                    Biodata.BrotherCount = extracted.BrotherCount ?? Biodata.BrotherCount;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.SisterCount))
+                    Biodata.SisterCount = extracted.SisterCount ?? Biodata.SisterCount;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.GrandFatherName))
+                    Biodata.GrandFatherName = extracted.GrandFatherName ?? Biodata.GrandFatherName;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.DoorNumber))
+                    Biodata.DoorNumber = extracted.DoorNumber ?? Biodata.DoorNumber;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.AddressLine))
+                    Biodata.AddressLine = extracted.AddressLine ?? Biodata.AddressLine;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.TownVillage))
+                    Biodata.TownVillage = extracted.TownVillage ?? Biodata.TownVillage;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.District))
+                    Biodata.District = extracted.District ?? Biodata.District;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.State))
+                    Biodata.State = extracted.State ?? Biodata.State;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.Country))
+                    Biodata.Country = extracted.Country ?? Biodata.Country;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.PinCode))
+                    Biodata.PinCode = extracted.PinCode ?? Biodata.PinCode;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.Phone1))
+                    Biodata.Phone1 = extracted.Phone1 ?? Biodata.Phone1;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.Phone2))
+                    Biodata.Phone2 = extracted.Phone2 ?? Biodata.Phone2;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.References))
+                    Biodata.References = extracted.References ?? Biodata.References;
+                if (!mergeOnly || string.IsNullOrWhiteSpace(Biodata.ExpectationsFromPartner))
+                    Biodata.ExpectationsFromPartner = extracted.ExpectationsFromPartner ?? Biodata.ExpectationsFromPartner;
+
+                // Force UI refresh
+                OnPropertyChanged(nameof(Biodata));
+                StatusMessage = $"Imported data from PDF: {Path.GetFileName(dlg.FileName)}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"PDF import failed: {ex.Message}";
             }
         }
 

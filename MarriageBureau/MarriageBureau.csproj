@@ -22,6 +22,12 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
     <PackageReference Include="ClosedXML" Version="0.102.2" />
+    <!-- PDF Export: beautiful biodata generation -->
+    <PackageReference Include="QuestPDF" Version="2024.3.7" />
+    <!-- PDF Import: text extraction from uploaded PDFs -->
+    <PackageReference Include="itext7" Version="8.0.4" />
+    <!-- Image encoding: save rendered WPF visual as PNG/JPEG -->
+    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
   </ItemGroup>
 
   <!-- Embedded Resources -->
