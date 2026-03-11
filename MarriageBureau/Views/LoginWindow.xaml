@@ -31,7 +31,7 @@
             <TextBlock Text="{Binding BusinessName}" FontSize="22" FontWeight="Bold"
                        HorizontalAlignment="Center" Foreground="White"
                        TextWrapping="Wrap" TextAlignment="Center" Margin="20,6,20,0"/>
-            <TextBlock Text="Management System" FontSize="13" Foreground="#CE93D8"
+            <TextBlock Text="" FontSize="13" Foreground="#CE93D8"
                        HorizontalAlignment="Center" Margin="0,2"/>
         </StackPanel>
 
@@ -83,6 +83,7 @@
                          Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
                          materialDesign:HintAssist.Hint="Enter username"
                          Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                          Foreground="#5E35B1"
                          Margin="0,0,0,16"/>
 
                 <!-- Password -->
@@ -92,6 +93,7 @@
                              materialDesign:HintAssist.Hint="Enter password"
                              Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
                              Margin="0,0,0,8"
+                              Foreground="#5E35B1"
                              PasswordChanged="PasswordBox_PasswordChanged"/>
 
                 <!-- Error message -->
@@ -131,7 +133,7 @@
         </materialDesign:Card>
 
         <!-- ═══ Footer ════════════════════════════════════════════════ -->
-        <TextBlock Grid.Row="2" Text="© 2025 Marriage Bureau Management System"
+        <TextBlock Grid.Row="2" Text="© 2025 Gupta Computer Services"
                    HorizontalAlignment="Center" Foreground="#CE93D8"
                    FontSize="10" Margin="0,16,0,20"/>
     </Grid>

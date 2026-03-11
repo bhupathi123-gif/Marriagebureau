@@ -8,7 +8,7 @@
     <UseWPF>true</UseWPF>
     <AssemblyName>MBKeyGen</AssemblyName>
     <RootNamespace>MBKeyGen</RootNamespace>
-    <ApplicationIcon>app.ico</ApplicationIcon>
+    <!-- <ApplicationIcon>app.ico</ApplicationIcon> -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 

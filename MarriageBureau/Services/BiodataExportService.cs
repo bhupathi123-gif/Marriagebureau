@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
@@ -7,6 +8,7 @@ using MarriageBureau.Services;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using SkiaSharp;
 
 namespace MarriageBureau.Services
 {
@@ -36,8 +38,21 @@ namespace MarriageBureau.Services
                     page.Margin(24, Unit.Point);
                     page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial"));
                     page.Content().Element(c => ComposeBiodata(c, profile, photoPaths, businessName));
-                    page.Foreground().Canvas((canvas, size) =>
-                        DrawWatermark(canvas, size, businessName));
+
+                    // Watermark on foreground
+                    page.Foreground().Element(container =>
+                    {
+                        if (string.IsNullOrWhiteSpace(businessName))
+                            return;
+
+                        var svg = BuildWatermarkSvg(PageSizes.A4.Width, PageSizes.A4.Height, businessName);
+
+                        container
+                            .Width(PageSizes.A4.Width)
+                            .Height(PageSizes.A4.Height)
+                            .Svg(svg);
+                    });
+
                 });
             });
             doc.GeneratePdf(outputPath);
@@ -55,8 +70,20 @@ namespace MarriageBureau.Services
                     page.Margin(24, Unit.Point);
                     page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial"));
                     page.Content().Element(c => ComposeBiodata(c, profile, photoPaths, businessName));
-                    page.Foreground().Canvas((canvas, size) =>
-                        DrawWatermark(canvas, size, businessName));
+
+                    // Watermark on foreground
+                    page.Foreground().Element(container =>
+                    {
+                        if (string.IsNullOrWhiteSpace(businessName))
+                            return;
+
+                        var svg = BuildWatermarkSvg(PageSizes.A4.Width, PageSizes.A4.Height, businessName);
+
+                        container
+                            .Width(PageSizes.A4.Width)
+                            .Height(PageSizes.A4.Height)
+                            .Svg(svg);
+                    });
                 });
             });
 
@@ -72,26 +99,73 @@ namespace MarriageBureau.Services
         }
 
         // ── Watermark ───────────────────────────────────────────────────────
+     
 
-        private static void DrawWatermark(
-            SkiaSharp.SKCanvas canvas,
+
+private static string BuildWatermarkSvg(float width, float height, string text)
+    {
+        text = EscapeXml(text);
+
+        var alpha = (35f / 255f).ToString(CultureInfo.InvariantCulture); // matches your SKColor alpha=35
+        var cx = (width / 2f).ToString(CultureInfo.InvariantCulture);
+        var cy = (height / 2f).ToString(CultureInfo.InvariantCulture);
+
+        string y(float v) => v.ToString(CultureInfo.InvariantCulture);
+
+        var y1 = y(-height * 0.25f);
+        var y2 = y(0);
+        var y3 = y(height * 0.25f);
+
+        var w = width.ToString(CultureInfo.InvariantCulture);
+        var h = height.ToString(CultureInfo.InvariantCulture);
+
+        return $@"
+<svg xmlns='http://www.w3.org/2000/svg' width='{w}' height='{h}' viewBox='0 0 {w} {h}'>
+  <g transform='translate({cx} {cy}) rotate(-35)'>
+    <text x='0' y='{y1}' text-anchor='middle'
+          font-family='Arial' font-size='48' font-weight='700'
+          fill='rgb(160,120,200)' fill-opacity='{alpha}'>{text}</text>
+    <text x='0' y='{y2}' text-anchor='middle'
+          font-family='Arial' font-size='48' font-weight='700'
+          fill='rgb(160,120,200)' fill-opacity='{alpha}'>{text}</text>
+    <text x='0' y='{y3}' text-anchor='middle'
+          font-family='Arial' font-size='48' font-weight='700'
+          fill='rgb(160,120,200)' fill-opacity='{alpha}'>{text}</text>
+  </g>
+</svg>".Trim();
+    }
+
+    private static string EscapeXml(string value)
+    {
+        return value
+            .Replace("&", "&amp;")
+            .Replace("<", "&lt;")
+            .Replace(">", "&gt;")
+            .Replace("\"", "&quot;")
+            .Replace("'", "&apos;");
+    }
+
+    private static void DrawWatermark(
+            object canvasObject,
             QuestPDF.Infrastructure.Size size,
             string text)
         {
             if (string.IsNullOrWhiteSpace(text)) return;
 
-            using var paint = new SkiaSharp.SKPaint
+            var canvas = (SKCanvas)canvasObject;
+
+            using var paint = new SKPaint
             {
-                Color       = new SkiaSharp.SKColor(160, 120, 200, 35),   // semi-transparent purple
-                TextSize    = 48,
+                Color = new SKColor(160, 120, 200, 35),   // semi-transparent purple
+                TextSize = 48,
                 IsAntialias = true,
-                Typeface    = SkiaSharp.SKTypeface.FromFamilyName(
+                Typeface = SKTypeface.FromFamilyName(
                     "Arial",
-                    SkiaSharp.SKFontStyle.Bold),
-                TextAlign = SkiaSharp.SKTextAlign.Center
+                    SKFontStyle.Bold),
+                TextAlign = SKTextAlign.Center
             };
 
-            float cx = size.Width  / 2f;
+            float cx = size.Width / 2f;
             float cy = size.Height / 2f;
 
             canvas.Save();
@@ -100,8 +174,8 @@ namespace MarriageBureau.Services
 
             // Draw the text three times (top, middle, bottom) for a tiled feel
             canvas.DrawText(text, 0, -size.Height * 0.25f, paint);
-            canvas.DrawText(text, 0,  0,                   paint);
-            canvas.DrawText(text, 0,  size.Height * 0.25f, paint);
+            canvas.DrawText(text, 0, 0, paint);
+            canvas.DrawText(text, 0, size.Height * 0.25f, paint);
 
             canvas.Restore();
         }
@@ -111,11 +185,11 @@ namespace MarriageBureau.Services
         private static void ComposeBiodata(
             IContainer root, Biodata p, List<string> photos, string businessName)
         {
-            bool isFemale    = p.Gender?.ToUpper() == "FEMALE";
-            var  accentColor = isFemale
+            bool isFemale = p.Gender?.ToUpper() == "FEMALE";
+            var accentColor = isFemale
                 ? QuestPDF.Helpers.Colors.Pink.Darken3
                 : QuestPDF.Helpers.Colors.Blue.Darken3;
-            var  lightAccent = isFemale
+            var lightAccent = isFemale
                 ? QuestPDF.Helpers.Colors.Pink.Lighten4
                 : QuestPDF.Helpers.Colors.Blue.Lighten4;
 
@@ -181,9 +255,9 @@ namespace MarriageBureau.Services
                     col.Item().Row(photoRow =>
                     {
                         photoRow.RelativeItem(1);
-                        AddPhotoBox(photoRow.FixedItem(130), photo1, "Photo 1", accentColor);
-                        photoRow.FixedItem(16);
-                        AddPhotoBox(photoRow.FixedItem(130), photo2, "Photo 2", accentColor);
+                        AddPhotoBox(photoRow.ConstantItem(130), photo1, "Photo 1", accentColor);
+                        photoRow.ConstantItem(16);
+                        AddPhotoBox(photoRow.ConstantItem(130), photo2, "Photo 2", accentColor);
                         photoRow.RelativeItem(1);
                     });
                     col.Item().PaddingVertical(8);
@@ -218,7 +292,7 @@ namespace MarriageBureau.Services
                         DetailRow(left, "Company / Address", p.CompanyAddress);
                     });
 
-                    mainRow.FixedItem(14);
+                    mainRow.ConstantItem(14);
 
                     // Right column
                     mainRow.RelativeItem().Column(right =>
@@ -303,7 +377,8 @@ namespace MarriageBureau.Services
 
         private static void SectionHeader(ColumnDescriptor col, string title, string color)
         {
-            col.Item().Background(color).Padding(4, 2)
+            col.Item().Background(color).PaddingHorizontal(4)
+                 .PaddingVertical(2)
                .Text(title).FontSize(9).Bold()
                .FontColor(QuestPDF.Helpers.Colors.White);
             col.Item().PaddingTop(3);

@@ -80,7 +80,7 @@ namespace MarriageBureau.ViewModels
         public ICommand ExportCommand       { get; }
 
         public List<string> GenderOptions { get; } = new() { "All", "MALE", "FEMALE" };
-        public List<string> StatusOptions { get; } = new() { "All" }
+        public List<string> StatusOptions { get; } = new[] { "All" }
             .Concat(Enum.GetNames<ProfileStatus>()).ToList();
 
         public BrowseViewModel(MainViewModel mainVm)
