@@ -1,5 +1,6 @@
 using MarriageBureau.Data;
 using MarriageBureau.Models;
+using MarriageBureau.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -15,6 +16,7 @@ namespace MarriageBureau.ViewModels
         private int _withPdfs;
         private ObservableCollection<Biodata> _recentProfiles = new();
         private bool _isLoading;
+        private string _businessName;
 
         public int TotalProfiles  { get => _totalProfiles;  set => SetProperty(ref _totalProfiles,  value); }
         public int MaleProfiles   { get => _maleProfiles;   set => SetProperty(ref _maleProfiles,   value); }
@@ -22,6 +24,8 @@ namespace MarriageBureau.ViewModels
         public int WithPhotos     { get => _withPhotos;     set => SetProperty(ref _withPhotos,     value); }
         public int WithPdfs       { get => _withPdfs;       set => SetProperty(ref _withPdfs,       value); }
         public bool IsLoading     { get => _isLoading;      set => SetProperty(ref _isLoading,      value); }
+
+        public string BusinessName { get => _businessName; set => SetProperty(ref _businessName, value); }
 
         public ObservableCollection<Biodata> RecentProfiles
         {
@@ -59,7 +63,7 @@ namespace MarriageBureau.ViewModels
                 FemaleProfiles = all.Count(p => p.Gender?.ToUpper() == "FEMALE");
                 WithPhotos     = all.Count(p => !string.IsNullOrWhiteSpace(p.PhotoPath));
                 WithPdfs       = all.Count(p => !string.IsNullOrWhiteSpace(p.PdfPath));
-
+                BusinessName = "Welcome to " + LicenceService.BusinessName;
                 var recent = all.OrderByDescending(p => p.CreatedAt).Take(10).ToList();
                 RecentProfiles = new ObservableCollection<Biodata>(recent);
             }

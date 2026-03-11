@@ -11,16 +11,19 @@ namespace MarriageBureau.Views
         private MainViewModel _vm;
         private BrowseView?    _browseView;
         private SlideshowView? _slideshowView;
+        public  AppUser        CurrentUser { get; }
 
-        public MainWindow()
+        public MainWindow(AppUser currentUser)
         {
+            CurrentUser = currentUser;
             InitializeComponent();
 
-            // Ensure database + tables exist (including new BiodataPhotos table)
-            AppDbContext.EnsureCreated();
-
-            _vm = new MainViewModel(this);
+            _vm = new MainViewModel(this, currentUser);
             DataContext = _vm;
+
+            // Show logged-in user info
+            UserNameText.Text = currentUser.FullName ?? currentUser.Username;
+            UserRoleText.Text = currentUser.Role;
 
             // Load dashboard on startup
             LoadDashboard();
@@ -62,6 +65,12 @@ namespace MarriageBureau.Views
         public void LoadExport(Biodata? biodata = null)
         {
             var view = new ExportView(_vm, biodata);
+            MainFrame.Content = view;
+        }
+
+        public void LoadSettings()
+        {
+            var view = new SettingsView(_vm, CurrentUser);
             MainFrame.Content = view;
         }
     }

@@ -123,6 +123,26 @@
                         </StackPanel>
                     </Grid>
 
+                    <!-- Status -->
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="Profile Status" Style="{StaticResource FormLabel}"/>
+                            <ComboBox ItemsSource="{Binding StatusOptions}"
+                                      SelectedItem="{Binding Biodata.Status}"
+                                      Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Bottom" Margin="0,0,0,4">
+                            <TextBlock FontSize="11" Foreground="Gray" TextWrapping="Wrap">
+                                Set the current status of the profile.
+                                Active = visible in slideshow; Married/Closed = archived.
+                            </TextBlock>
+                        </StackPanel>
+                    </Grid>
+
                     <Grid Margin="0,12,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>

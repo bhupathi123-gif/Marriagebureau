@@ -17,8 +17,8 @@
             <!-- Header -->
             <TextBlock Text="Dashboard" FontSize="28" FontWeight="Bold"
                        Foreground="{DynamicResource PrimaryHueMidBrush}" Margin="0,0,0,6"/>
-            <TextBlock Text="Welcome to Marriage Bureau Management System"
-                       FontSize="14" Foreground="Gray" Margin="0,0,0,24"/>
+            <TextBlock Text="{Binding BusinessName}"
+                       FontSize="20" Foreground="Gray" Margin="0,0,0,24"/>
 
             <!-- Stat Cards Row -->
             <UniformGrid Columns="5" Margin="0,0,0,24">

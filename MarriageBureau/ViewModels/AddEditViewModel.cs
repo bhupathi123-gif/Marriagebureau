@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Configuration;
 using System.IO;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
@@ -149,6 +148,7 @@ namespace MarriageBureau.ViewModels
         public List<string> GenderOptions    { get; } = new() { "MALE", "FEMALE" };
         public List<string> ComplexionOptions { get; } = new() { "FAIR", "VERY FAIR", "WHITE", "MEDIUM", "RED", "DARK", "WHEATISH" };
         public List<string> RasiOptions      { get; } = new() { "MESHA", "VRUSHABA", "MIDHUNA", "KARKATAKA", "SIMHA", "KANYA", "TULA", "VRUCHIKA", "DHANU", "MAKARA", "KUMBHA", "MEENA" };
+        public List<ProfileStatus> StatusOptions { get; } = Enum.GetValues<ProfileStatus>().ToList();
 
         // ── Commands ─────────────────────────────────────────────────
 
@@ -550,12 +550,9 @@ namespace MarriageBureau.ViewModels
 
         private static string GetFilesDirectory(string subfolder)
         {
-            var rootPath = ConfigurationManager.AppSettings["DataRootPath"];
-            var dir = Path.Combine(
-               rootPath,
-                "MarriageBureau", subfolder);
-            Directory.CreateDirectory(dir);
-            return dir;
+            var baseDir = Path.Combine(AppDbContext.GetAppDataPath(), subfolder);
+            Directory.CreateDirectory(baseDir);
+            return baseDir;
         }
 
         private static Biodata CopyBiodata(Biodata src) => new()
@@ -564,6 +561,7 @@ namespace MarriageBureau.ViewModels
             Name                    = src.Name,
             Caste                   = src.Caste,
             Gender                  = src.Gender,
+            Status                  = src.Status,
             DateOfBirth             = src.DateOfBirth,
             TimeOfBirth             = src.TimeOfBirth,
             AmPm                    = src.AmPm,

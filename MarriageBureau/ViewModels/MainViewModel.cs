@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using MarriageBureau.Models;
 using MarriageBureau.Views;
 
 namespace MarriageBureau.ViewModels
@@ -10,7 +11,8 @@ namespace MarriageBureau.ViewModels
         AddEdit,
         Slideshow,
         ExcelImport,
-        Export
+        Export,
+        Settings
     }
 
     public class MainViewModel : BaseViewModel
@@ -18,6 +20,8 @@ namespace MarriageBureau.ViewModels
         private AppPage _currentPage = AppPage.Dashboard;
         private object? _currentView;
         private string _title = "Marriage Bureau - Management System";
+
+        public AppUser CurrentUser { get; }
 
         public AppPage CurrentPage
         {
@@ -31,6 +35,7 @@ namespace MarriageBureau.ViewModels
                 OnPropertyChanged(nameof(IsSlideshow));
                 OnPropertyChanged(nameof(IsExcelImport));
                 OnPropertyChanged(nameof(IsExport));
+                OnPropertyChanged(nameof(IsSettings));
             }
         }
 
@@ -46,12 +51,13 @@ namespace MarriageBureau.ViewModels
             set => SetProperty(ref _title, value);
         }
 
-        public bool IsDashboard   => CurrentPage == AppPage.Dashboard;
-        public bool IsBrowse      => CurrentPage == AppPage.Browse;
-        public bool IsAddEdit     => CurrentPage == AppPage.AddEdit;
-        public bool IsSlideshow   => CurrentPage == AppPage.Slideshow;
+        public bool IsDashboard  => CurrentPage == AppPage.Dashboard;
+        public bool IsBrowse     => CurrentPage == AppPage.Browse;
+        public bool IsAddEdit    => CurrentPage == AppPage.AddEdit;
+        public bool IsSlideshow  => CurrentPage == AppPage.Slideshow;
         public bool IsExcelImport => CurrentPage == AppPage.ExcelImport;
-        public bool IsExport      => CurrentPage == AppPage.Export;
+        public bool IsExport     => CurrentPage == AppPage.Export;
+        public bool IsSettings   => CurrentPage == AppPage.Settings;
 
         public ICommand NavigateDashboardCommand   { get; }
         public ICommand NavigateBrowseCommand      { get; }
@@ -59,12 +65,14 @@ namespace MarriageBureau.ViewModels
         public ICommand NavigateSlideshowCommand   { get; }
         public ICommand NavigateExcelImportCommand { get; }
         public ICommand NavigateExportCommand      { get; }
+        public ICommand NavigateSettingsCommand    { get; }
 
         private readonly MainWindow _mainWindow;
 
-        public MainViewModel(MainWindow mainWindow)
+        public MainViewModel(MainWindow mainWindow, AppUser currentUser)
         {
-            _mainWindow = mainWindow;
+            _mainWindow  = mainWindow;
+            CurrentUser  = currentUser;
 
             NavigateDashboardCommand   = new RelayCommand(() => Navigate(AppPage.Dashboard));
             NavigateBrowseCommand      = new RelayCommand(() => Navigate(AppPage.Browse));
@@ -72,6 +80,7 @@ namespace MarriageBureau.ViewModels
             NavigateSlideshowCommand   = new RelayCommand(() => Navigate(AppPage.Slideshow));
             NavigateExcelImportCommand = new RelayCommand(() => Navigate(AppPage.ExcelImport));
             NavigateExportCommand      = new RelayCommand(() => Navigate(AppPage.Export));
+            NavigateSettingsCommand    = new RelayCommand(() => Navigate(AppPage.Settings));
         }
 
         public void Navigate(AppPage page, object? parameter = null)
@@ -96,6 +105,9 @@ namespace MarriageBureau.ViewModels
                     break;
                 case AppPage.Export:
                     _mainWindow.LoadExport(parameter as Models.Biodata);
+                    break;
+                case AppPage.Settings:
+                    _mainWindow.LoadSettings();
                     break;
             }
         }

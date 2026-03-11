@@ -64,6 +64,21 @@ namespace MarriageBureau.Converters
             => value is bool b ? !b : value;
     }
 
+    /// <summary>
+    /// Alias for BoolToInverseConverter – used in LoginWindow.xaml as InverseBoolConverter.
+    /// True → False, False → True (for IsEnabled bindings).
+    /// </summary>
+    public class InverseBoolConverter : IValueConverter
+    {
+        public static readonly InverseBoolConverter Instance = new();
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            => value is bool b ? !b : value;
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => value is bool b ? !b : value;
+    }
+
     /// <summary>Bool to Visibility (true = Visible, false = Collapsed)</summary>
     public class BoolToVisibilityConverter : IValueConverter
     {

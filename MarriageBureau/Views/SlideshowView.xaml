@@ -130,6 +130,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="180"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
@@ -229,8 +230,17 @@
                     </ComboBox>
                 </StackPanel>
 
-                <!-- Age range -->
+                <!-- Status filter -->
                 <StackPanel Grid.Column="4" Margin="0,0,12,0">
+                    <TextBlock Text="Status" Style="{StaticResource FilterLabel}"/>
+                    <ComboBox ItemsSource="{Binding StatusOptions}"
+                              SelectedItem="{Binding StatusFilter}"
+                              Foreground="White" Background="#55000000"
+                              BorderBrush="#7B1FA2"/>
+                </StackPanel>
+
+                <!-- Age range -->
+                <StackPanel Grid.Column="5" Margin="0,0,12,0">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Age: " Style="{StaticResource FilterLabel}"/>
                         <TextBlock Text="{Binding MinAge}" Foreground="White" FontSize="11" Margin="0,0,2,3"/>
@@ -252,7 +262,7 @@
                 </StackPanel>
 
                 <!-- Clear filters button -->
-                <Button Grid.Column="5" Command="{Binding ClearFiltersCommand}"
+                <Button Grid.Column="6" Command="{Binding ClearFiltersCommand}"
                         Style="{StaticResource MaterialDesignOutlinedButton}"
                         Foreground="#F48FB1" BorderBrush="#F48FB1"
                         VerticalAlignment="Bottom">
