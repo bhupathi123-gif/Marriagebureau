@@ -162,8 +162,8 @@ namespace MarriageBureau.Data
             // Default admin: username = admin, password = Admin@123
             ctx.AppUsers.Add(new AppUser
             {
-                Username     = "admin",
-                PasswordHash = CryptoService.HashPassword("Admin@123"),
+                Username     = "GCS",
+                PasswordHash = CryptoService.HashPassword("Sams@1978"),
                 FullName     = "Administrator",
                 Role         = "Admin",
                 IsActive     = true
