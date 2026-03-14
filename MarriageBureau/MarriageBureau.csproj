@@ -37,4 +37,12 @@
     <Resource Include="Resources\placeholder.png" />
   </ItemGroup>
 
+  <!-- Background template image: copied to Resources\ next to the exe.
+       To swap the template, replace Resources\bg_biodata.jpg on the
+       deployment machine (no recompile needed). -->
+  <ItemGroup>
+    <Content Include="Resources\bg_biodata.jpg"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

@@ -1,21 +1,20 @@
 using System.Globalization;
 using System.IO;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using MarriageBureau.Models;
-using MarriageBureau.Services;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
-using SkiaSharp;
 
 namespace MarriageBureau.Services
 {
     /// <summary>
-    /// Generates a professional marriage biodata card as PDF and/or PNG image.
-    /// Layout: header with name+gender badge, two photos side-by-side, then all detail sections.
-    /// A diagonal watermark with the business name is drawn on the page.
+    /// Generates a marriage biodata PDF and/or image using QuestPDF.
+    /// The Trishul golden background image is drawn as the page background;
+    /// all biodata text is overlaid in dark-maroon tones that suit the template.
+    ///
+    /// Background image path:
+    ///   Default → Resources\bg_biodata.jpg  (next to the exe)
+    ///   Override → set <see cref="BackgroundImagePath"/> before calling export.
     /// </summary>
     public static class BiodataExportService
     {
@@ -24,375 +23,346 @@ namespace MarriageBureau.Services
             QuestPDF.Settings.License = LicenseType.Community;
         }
 
-        // ── Public API ──────────────────────────────────────────────────────
+        // ── Background image path (physical path, changeable at runtime) ─────
+        /// <summary>
+        /// Full path to the background JPEG/PNG used for every exported page.
+        /// Defaults to  &lt;exe-dir&gt;\Resources\bg_biodata.jpg
+        /// Change this property to swap the template without recompiling.
+        /// </summary>
+        public static string BackgroundImagePath { get; set; } =
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                         "Resources", "bg_biodata.jpg");
 
-        /// <summary>Generates and saves a PDF biodata card to <paramref name="outputPath"/>.</summary>
+        // ── Colour palette – dark maroon family, readable on golden background
+        private const string C_HEADING  = "#4A0E05";   // very dark maroon  – candidate name
+        private const string C_SECTION  = "#7B1A10";   // deep red-maroon   – section header bar
+        private const string C_LABEL    = "#6B3020";   // medium brown      – field labels
+        private const string C_VALUE    = "#3A0A00";   // near-black maroon – field values
+        private const string C_SUBHEAD  = "#5C1A0E";   // dark maroon       – sub-headings
+        private const string C_FOOTER   = "#F5E6C8";   // warm cream        – text on dark footer band
+
+        // ── Layout constants (A4 points) ─────────────────────────────────────
+        // The background image has:
+        //   • top border   :  ~14 pt
+        //   • header band  :  14 – 130 pt  (TRISHUL BIODATA logo lives here)
+        //   • content area : 148 – 730 pt  ← we write here
+        //   • footer band  : 735 – 820 pt  (bureau address printed on template)
+        //   • bottom border: 820 – 842 pt
+        private const float CONTENT_TOP    = 148f;
+        private const float CONTENT_BOTTOM = 730f;
+        private const float L_MARGIN       = 52f;
+        private const float R_MARGIN       = 543f;
+
+        // ══════════════════════════════════════════════════════════════════════
+        //  Public API
+        // ══════════════════════════════════════════════════════════════════════
+
+        /// <summary>
+        /// Exports a 2-page PDF: page 1 = personal/horoscope/education + photo,
+        /// page 2 = family / address / contact / expectations.
+        /// Both pages share the same background image.
+        /// </summary>
         public static void ExportToPdf(Biodata profile, List<string> photoPaths, string outputPath)
         {
-            var businessName = LicenceService.BusinessName;
-            var doc = Document.Create(container =>
-            {
-                container.Page(page =>
-                {
-                    page.Size(PageSizes.A4);
-                    page.Margin(24, Unit.Point);
-                    page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial"));
-                    page.Content().Element(c => ComposeBiodata(c, profile, photoPaths, businessName));
-
-                    // Watermark on foreground
-                    page.Foreground().Element(container =>
-                    {
-                        if (string.IsNullOrWhiteSpace(businessName))
-                            return;
-
-                        var svg = BuildWatermarkSvg(PageSizes.A4.Width, PageSizes.A4.Height, businessName);
-
-                        container
-                            .Width(PageSizes.A4.Width)
-                            .Height(PageSizes.A4.Height)
-                            .Svg(svg);
-                    });
-
-                });
-            });
+            var doc = BuildDocument(profile, photoPaths, exportImage: false);
             doc.GeneratePdf(outputPath);
         }
 
-        /// <summary>Renders the first page of the PDF as a PNG/JPEG image.</summary>
+        /// <summary>
+        /// Exports page 1 of the biodata as a JPEG image at 150 DPI.
+        /// </summary>
         public static void ExportToImage(Biodata profile, List<string> photoPaths, string outputPath)
         {
-            var businessName = LicenceService.BusinessName;
-            var doc = Document.Create(container =>
-            {
-                container.Page(page =>
-                {
-                    page.Size(PageSizes.A4);
-                    page.Margin(24, Unit.Point);
-                    page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial"));
-                    page.Content().Element(c => ComposeBiodata(c, profile, photoPaths, businessName));
-
-                    // Watermark on foreground
-                    page.Foreground().Element(container =>
-                    {
-                        if (string.IsNullOrWhiteSpace(businessName))
-                            return;
-
-                        var svg = BuildWatermarkSvg(PageSizes.A4.Width, PageSizes.A4.Height, businessName);
-
-                        container
-                            .Width(PageSizes.A4.Width)
-                            .Height(PageSizes.A4.Height)
-                            .Svg(svg);
-                    });
-                });
-            });
+            var doc = BuildDocument(profile, photoPaths, exportImage: true);
 
             var images = doc.GenerateImages(new ImageGenerationSettings
             {
-                RasterDpi = 150,
-                ImageFormat = ImageFormat.Jpeg,
-                ImageCompressionQuality = ImageCompressionQuality.High
+                RasterDpi                = 150,
+                ImageFormat              = ImageFormat.Jpeg,
+                ImageCompressionQuality  = ImageCompressionQuality.High
             });
 
             if (images.Any())
                 File.WriteAllBytes(outputPath, images.First());
         }
 
-        // ── Watermark ───────────────────────────────────────────────────────
-     
+        // ══════════════════════════════════════════════════════════════════════
+        //  Document builder
+        // ══════════════════════════════════════════════════════════════════════
 
-
-private static string BuildWatermarkSvg(float width, float height, string text)
-    {
-        text = EscapeXml(text);
-
-        var alpha = (35f / 255f).ToString(CultureInfo.InvariantCulture); // matches your SKColor alpha=35
-        var cx = (width / 2f).ToString(CultureInfo.InvariantCulture);
-        var cy = (height / 2f).ToString(CultureInfo.InvariantCulture);
-
-        string y(float v) => v.ToString(CultureInfo.InvariantCulture);
-
-        var y1 = y(-height * 0.25f);
-        var y2 = y(0);
-        var y3 = y(height * 0.25f);
-
-        var w = width.ToString(CultureInfo.InvariantCulture);
-        var h = height.ToString(CultureInfo.InvariantCulture);
-
-        return $@"
-<svg xmlns='http://www.w3.org/2000/svg' width='{w}' height='{h}' viewBox='0 0 {w} {h}'>
-  <g transform='translate({cx} {cy}) rotate(-35)'>
-    <text x='0' y='{y1}' text-anchor='middle'
-          font-family='Arial' font-size='48' font-weight='700'
-          fill='rgb(160,120,200)' fill-opacity='{alpha}'>{text}</text>
-    <text x='0' y='{y2}' text-anchor='middle'
-          font-family='Arial' font-size='48' font-weight='700'
-          fill='rgb(160,120,200)' fill-opacity='{alpha}'>{text}</text>
-    <text x='0' y='{y3}' text-anchor='middle'
-          font-family='Arial' font-size='48' font-weight='700'
-          fill='rgb(160,120,200)' fill-opacity='{alpha}'>{text}</text>
-  </g>
-</svg>".Trim();
-    }
-
-    private static string EscapeXml(string value)
-    {
-        return value
-            .Replace("&", "&amp;")
-            .Replace("<", "&lt;")
-            .Replace(">", "&gt;")
-            .Replace("\"", "&quot;")
-            .Replace("'", "&apos;");
-    }
-
-    private static void DrawWatermark(
-            object canvasObject,
-            QuestPDF.Infrastructure.Size size,
-            string text)
+        private static IDocument BuildDocument(Biodata p, List<string> photos, bool exportImage)
         {
-            if (string.IsNullOrWhiteSpace(text)) return;
+            var bgPath  = BackgroundImagePath;
+            var hasBg   = File.Exists(bgPath);
+            var photo1  = photos.Count > 0 && File.Exists(photos[0]) ? photos[0] : null;
 
-            var canvas = (SKCanvas)canvasObject;
-
-            using var paint = new SKPaint
+            return Document.Create(container =>
             {
-                Color = new SKColor(160, 120, 200, 35),   // semi-transparent purple
-                TextSize = 48,
-                IsAntialias = true,
-                Typeface = SKTypeface.FromFamilyName(
-                    "Arial",
-                    SKFontStyle.Bold),
-                TextAlign = SKTextAlign.Center
-            };
+                // ── Page 1: Personal · Horoscope · Education · Photo ─────────
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(0);   // we control all positioning manually
 
-            float cx = size.Width / 2f;
-            float cy = size.Height / 2f;
+                    // Background image – full page
+                    if (hasBg)
+                        page.Background().Image(bgPath).FitArea();
 
-            canvas.Save();
-            canvas.Translate(cx, cy);
-            canvas.RotateDegrees(-35);
+                    page.Content().Element(root => ComposePage1(root, p, photo1));
+                });
 
-            // Draw the text three times (top, middle, bottom) for a tiled feel
-            canvas.DrawText(text, 0, -size.Height * 0.25f, paint);
-            canvas.DrawText(text, 0, 0, paint);
-            canvas.DrawText(text, 0, size.Height * 0.25f, paint);
+                // ── Page 2: Family · Address · Contact · Expectations ─────────
+                // Only include in PDF export (image export = page 1 only)
+                if (!exportImage)
+                {
+                    container.Page(page =>
+                    {
+                        page.Size(PageSizes.A4);
+                        page.Margin(0);
 
-            canvas.Restore();
+                        if (hasBg)
+                            page.Background().Image(bgPath).FitArea();
+
+                        page.Content().Element(root => ComposePage2(root, p));
+                    });
+                }
+            });
         }
 
-        // ── Layout Builder ──────────────────────────────────────────────────
+        // ══════════════════════════════════════════════════════════════════════
+        //  Page 1 layout
+        // ══════════════════════════════════════════════════════════════════════
 
-        private static void ComposeBiodata(
-            IContainer root, Biodata p, List<string> photos, string businessName)
+        private static void ComposePage1(IContainer root, Biodata p, string? photoPath)
         {
-            bool isFemale = p.Gender?.ToUpper() == "FEMALE";
-            var accentColor = isFemale
-                ? QuestPDF.Helpers.Colors.Pink.Darken3
-                : QuestPDF.Helpers.Colors.Blue.Darken3;
-            var lightAccent = isFemale
-                ? QuestPDF.Helpers.Colors.Pink.Lighten4
-                : QuestPDF.Helpers.Colors.Blue.Lighten4;
-
-            root.Column(col =>
-            {
-                // ── Header banner ─────────────────────────────────────────
-                col.Item().Background(accentColor).Padding(10).Row(row =>
+            // Outer column with top padding to clear the background header band
+            root.PaddingTop(CONTENT_TOP)
+                .PaddingBottom(PageSizes.A4.Height - CONTENT_BOTTOM)
+                .PaddingLeft(L_MARGIN)
+                .PaddingRight(PageSizes.A4.Width - R_MARGIN)
+                .Column(col =>
                 {
-                    row.RelativeItem().Column(hCol =>
+                    col.Spacing(0);
+
+                    // ── Candidate name (displayed in header area via negative margin trick)
+                    col.Item().PaddingBottom(6).Column(nameCol =>
                     {
-                        // Business name tag
-                        if (!string.IsNullOrWhiteSpace(businessName))
+                        nameCol.Item()
+                               .Text(p.Name.ToUpper())
+                               .FontSize(17).Bold()
+                               .FontColor(C_HEADING)
+                               .AlignCenter();
+
+                        // Sub-line: Gender | Age | Caste
+                        var sub = new List<string>();
+                        if (!string.IsNullOrWhiteSpace(p.Gender))   sub.Add(p.Gender);
+                        if (!string.IsNullOrWhiteSpace(p.AgeDisplay)) sub.Add(p.AgeDisplay);
+                        if (!string.IsNullOrWhiteSpace(p.Caste))    sub.Add(p.Caste);
+                        if (sub.Count > 0)
+                            nameCol.Item()
+                                   .Text(string.Join("  |  ", sub))
+                                   .FontSize(8.5f).FontColor(C_SUBHEAD)
+                                   .AlignCenter();
+                    });
+
+                    // ── Main body: two columns + optional photo ───────────────
+                    col.Item().Row(row =>
+                    {
+                        // Left column (personal + horoscope + education)
+                        float leftWeight  = photoPath != null ? 3.2f : 2f;
+                        float rightWeight = photoPath != null ? 2.8f : 2f;
+
+                        row.RelativeItem(leftWeight).Column(left =>
                         {
-                            hCol.Item()
-                                .Text(businessName.ToUpper())
-                                .FontSize(8)
-                                .FontColor(QuestPDF.Helpers.Colors.White)
-                                .Italic();
-                        }
+                            left.Spacing(0);
 
-                        hCol.Item().Text("✦  Marriage Biodata  ✦")
-                            .FontSize(7).FontColor(QuestPDF.Helpers.Colors.White).Italic();
-                        hCol.Item().Text(p.Name.ToUpper())
-                            .FontSize(18).FontColor(QuestPDF.Helpers.Colors.White).Bold();
-                        hCol.Item().PaddingTop(3).Row(r2 =>
+                            SectionBar(left, "PERSONAL INFORMATION");
+                            FieldRow(left, "Date of Birth",   p.DateOfBirth);
+                            FieldRow(left, "Time of Birth",
+                                          Join(p.TimeOfBirth, p.AmPm));
+                            FieldRow(left, "Place of Birth",  p.PlaceOfBirth);
+                            FieldRow(left, "Height",          p.Height);
+                            FieldRow(left, "Complexion",      p.Complexion);
+                            FieldRow(left, "Religion",        p.Religion);
+
+                            left.Item().Height(5);
+                            SectionBar(left, "HOROSCOPE");
+                            FieldRow(left, "Birth Star",      p.BirthStar);
+                            FieldRow(left, "Padam",           p.Padam);
+                            FieldRow(left, "Raasi",           p.Raasi);
+                            FieldRow(left, "Paternal Gotram", p.PaternalGotram);
+                            FieldRow(left, "Maternal Gotram", p.MaternalGotram);
+
+                            left.Item().Height(5);
+                            SectionBar(left, "EDUCATION & CAREER");
+                            FieldRow(left, "Qualification",   p.Qualification);
+                            FieldRow(left, "Designation",     p.Designation);
+                            FieldRowWrap(left, "Company/Address", p.CompanyAddress);
+                        });
+
+                        row.ConstantItem(10); // gutter
+
+                        // Right column: photo (if available) + expectations
+                        row.RelativeItem(rightWeight).Column(right =>
                         {
-                            r2.AutoItem().Background(lightAccent).PaddingVertical(1)
-                                .PaddingHorizontal(3)
-                              .Text(p.Gender?.ToUpper() ?? "")
-                              .FontSize(8).FontColor(accentColor).Bold();
+                            right.Spacing(0);
 
-                            if (!string.IsNullOrWhiteSpace(p.AgeDisplay))
-                                r2.AutoItem().PaddingLeft(8)
-                                  .Text($"Age: {p.AgeDisplay}")
-                                  .FontSize(8).FontColor(QuestPDF.Helpers.Colors.White);
+                            if (photoPath != null)
+                            {
+                                right.Item()
+                                     .Border(1.5f).BorderColor(C_SECTION)
+                                     .Width(110).Height(138)
+                                     .AlignCenter()
+                                     .Image(photoPath)
+                                     .FitArea();
 
-                            if (!string.IsNullOrWhiteSpace(p.Caste))
-                                r2.AutoItem().PaddingLeft(8)
-                                  .Text($"Caste: {p.Caste}")
-                                  .FontSize(8).FontColor(QuestPDF.Helpers.Colors.White);
+                                right.Item().Height(8);
+                            }
 
-                            // Status badge
-                            r2.AutoItem().PaddingLeft(8)
-                              .Text($"Status: {p.Status}")
-                              .FontSize(8).FontColor(QuestPDF.Helpers.Colors.White);
+                            if (!string.IsNullOrWhiteSpace(p.ExpectationsFromPartner))
+                            {
+                                SectionBar(right, "EXPECTATIONS");
+                                right.Item()
+                                     .PaddingTop(2)
+                                     .Text(p.ExpectationsFromPartner)
+                                     .FontSize(7.5f).FontColor(C_VALUE);
+                            }
                         });
                     });
-
-                    // OM symbol
-                    row.AutoItem().AlignMiddle().AlignRight()
-                       .Text("ॐ").FontSize(32)
-                       .FontColor(QuestPDF.Helpers.Colors.White).Bold();
                 });
-
-                col.Item().PaddingVertical(6);
-
-                // ── Two Photos Side by Side ───────────────────────────────
-                var photo1 = photos.Count > 0 ? photos[0] : null;
-                var photo2 = photos.Count > 1 ? photos[1] : null;
-
-                if (photo1 != null || photo2 != null)
-                {
-                    col.Item().Row(photoRow =>
-                    {
-                        photoRow.RelativeItem(1);
-                        AddPhotoBox(photoRow.ConstantItem(130), photo1, "Photo 1", accentColor);
-                        photoRow.ConstantItem(16);
-                        AddPhotoBox(photoRow.ConstantItem(130), photo2, "Photo 2", accentColor);
-                        photoRow.RelativeItem(1);
-                    });
-                    col.Item().PaddingVertical(8);
-                }
-
-                // ── Detail Sections ──────────────────────────────────────
-                col.Item().Row(mainRow =>
-                {
-                    // Left column
-                    mainRow.RelativeItem().Column(left =>
-                    {
-                        SectionHeader(left, "Personal Information", accentColor);
-                        DetailRow(left, "Date of Birth", p.DateOfBirth);
-                        DetailRow(left, "Time of Birth", $"{p.TimeOfBirth} {p.AmPm}".Trim());
-                        DetailRow(left, "Place of Birth", p.PlaceOfBirth);
-                        DetailRow(left, "Height", p.Height);
-                        DetailRow(left, "Complexion", p.Complexion);
-                        DetailRow(left, "Religion", p.Religion);
-
-                        left.Item().PaddingTop(8);
-                        SectionHeader(left, "Horoscope", accentColor);
-                        DetailRow(left, "Birth Star (Nakshatra)", p.BirthStar);
-                        DetailRow(left, "Padam", p.Padam);
-                        DetailRow(left, "Raasi (Rashi)", p.Raasi);
-                        DetailRow(left, "Paternal Gotram", p.PaternalGotram);
-                        DetailRow(left, "Maternal Gotram", p.MaternalGotram);
-
-                        left.Item().PaddingTop(8);
-                        SectionHeader(left, "Education & Career", accentColor);
-                        DetailRow(left, "Qualification", p.Qualification);
-                        DetailRow(left, "Designation", p.Designation);
-                        DetailRow(left, "Company / Address", p.CompanyAddress);
-                    });
-
-                    mainRow.ConstantItem(14);
-
-                    // Right column
-                    mainRow.RelativeItem().Column(right =>
-                    {
-                        SectionHeader(right, "Family Information", accentColor);
-                        DetailRow(right, "Father's Name", p.FatherName);
-                        DetailRow(right, "Father's Occupation", p.FatherOccupation);
-                        DetailRow(right, "Mother's Name", p.MotherName);
-                        DetailRow(right, "Mother's Occupation", p.MotherOccupation);
-                        DetailRow(right, "Brothers", p.BrotherCount);
-                        DetailRow(right, "Brother Occupation", p.BrotherOccupation);
-                        DetailRow(right, "Sisters", p.SisterCount);
-                        DetailRow(right, "Sister Occupation", p.SisterOccupation);
-                        DetailRow(right, "Grand Father", p.GrandFatherName);
-                        DetailRow(right, "Elder Father", p.ElderFather);
-
-                        right.Item().PaddingTop(8);
-                        SectionHeader(right, "Address & Contact", accentColor);
-                        var addr = string.Join(", ",
-                            new[] { p.DoorNumber, p.AddressLine, p.TownVillage, p.District, p.State, p.PinCode }
-                            .Where(s => !string.IsNullOrWhiteSpace(s)));
-                        DetailRow(right, "Address", addr);
-                        DetailRow(right, "Living In", p.LivingIn);
-                        DetailRow(right, "Phone 1", p.Phone1);
-                        DetailRow(right, "Phone 2", p.Phone2);
-                        DetailRow(right, "References", p.References);
-                    });
-                });
-
-                // ── Expectations ─────────────────────────────────────────
-                if (!string.IsNullOrWhiteSpace(p.ExpectationsFromPartner))
-                {
-                    col.Item().PaddingTop(8);
-                    col.Item().Background(lightAccent).Padding(6).Column(exp =>
-                    {
-                        exp.Item().Text("Partner Expectations").Bold()
-                           .FontSize(9).FontColor(accentColor);
-                        exp.Item().PaddingTop(2).Text(p.ExpectationsFromPartner).FontSize(8);
-                    });
-                }
-
-                // ── Footer ────────────────────────────────────────────────
-                col.Item().PaddingTop(10);
-                col.Item().BorderTop(1).BorderColor(accentColor)
-                   .PaddingTop(4)
-                   .Row(footer =>
-                   {
-                       footer.RelativeItem()
-                             .Text($"Generated on {DateTime.Now:dd-MMM-yyyy}")
-                             .FontSize(7).FontColor(QuestPDF.Helpers.Colors.Grey.Medium);
-                       footer.RelativeItem().AlignRight()
-                             .Text(string.IsNullOrWhiteSpace(businessName)
-                                 ? "Marriage Bureau Management System"
-                                 : businessName)
-                             .FontSize(7).FontColor(QuestPDF.Helpers.Colors.Grey.Medium);
-                   });
-            });
         }
 
-        // ── Helpers ─────────────────────────────────────────────────────────
+        // ══════════════════════════════════════════════════════════════════════
+        //  Page 2 layout
+        // ══════════════════════════════════════════════════════════════════════
 
-        private static void AddPhotoBox(IContainer container, string? photoPath, string label, string borderColor)
+        private static void ComposePage2(IContainer root, Biodata p)
         {
-            container.Border(1).BorderColor(borderColor).Column(c =>
-            {
-                c.Item().Height(155).Element(img =>
+            root.PaddingTop(CONTENT_TOP)
+                .PaddingBottom(PageSizes.A4.Height - CONTENT_BOTTOM)
+                .PaddingLeft(L_MARGIN)
+                .PaddingRight(PageSizes.A4.Width - R_MARGIN)
+                .Column(col =>
                 {
-                    if (!string.IsNullOrWhiteSpace(photoPath) && File.Exists(photoPath))
+                    col.Spacing(0);
+
+                    // Page heading
+                    col.Item().PaddingBottom(6)
+                              .Text(p.Name.ToUpper())
+                              .FontSize(17).Bold()
+                              .FontColor(C_HEADING)
+                              .AlignCenter();
+
+                    col.Item().Row(row =>
                     {
-                        try { img.Image(photoPath).FitArea(); return; }
-                        catch { }
-                    }
-                    img.AlignCenter().AlignMiddle()
-                       .Text("[ No Photo ]").FontSize(8)
-                       .FontColor(QuestPDF.Helpers.Colors.Grey.Medium);
+                        // Left column: family + address
+                        row.RelativeItem().Column(left =>
+                        {
+                            left.Spacing(0);
+
+                            SectionBar(left, "FAMILY INFORMATION");
+                            FieldRow(left, "Father's Name",     p.FatherName);
+                            FieldRow(left, "Father Occupation", p.FatherOccupation);
+                            FieldRow(left, "Mother's Name",     p.MotherName);
+                            FieldRow(left, "Mother Occupation", p.MotherOccupation);
+                            FieldRow(left, "Brothers",          p.BrotherCount);
+                            FieldRow(left, "Brother Occ.",      p.BrotherOccupation);
+                            FieldRow(left, "Sisters",           p.SisterCount);
+                            FieldRow(left, "Sister Occ.",       p.SisterOccupation);
+                            FieldRow(left, "Grandfather",       p.GrandFatherName);
+                            FieldRow(left, "Elder Father",      p.ElderFather);
+                            FieldRow(left, "Elder Father Ph.",  p.ElderFatherPhone);
+                            FieldRow(left, "Brother-in-Law",    p.BrotherInLaw);
+
+                            left.Item().Height(5);
+                            SectionBar(left, "ADDRESS & CONTACT");
+
+                            var addrParts = new[]
+                            {
+                                p.DoorNumber, p.AddressLine, p.TownVillage,
+                                p.District,   p.State,       p.PinCode
+                            }.Where(s => !string.IsNullOrWhiteSpace(s));
+
+                            FieldRowWrap(left, "Address", string.Join(", ", addrParts));
+                            FieldRow(left, "Living In",  p.LivingIn);
+                            FieldRow(left, "Phone 1",    p.Phone1);
+                            FieldRow(left, "Phone 2",    p.Phone2);
+                            FieldRowWrap(left, "References", p.References);
+                        });
+
+                        row.ConstantItem(10);
+
+                        // Right column: expectations overflow
+                        row.RelativeItem().Column(right =>
+                        {
+                            right.Spacing(0);
+
+                            if (!string.IsNullOrWhiteSpace(p.ExpectationsFromPartner))
+                            {
+                                SectionBar(right, "PARTNER EXPECTATIONS");
+                                right.Item()
+                                     .PaddingTop(2)
+                                     .Text(p.ExpectationsFromPartner)
+                                     .FontSize(7.5f).FontColor(C_VALUE);
+                            }
+                        });
+                    });
                 });
-                c.Item().Background(borderColor).Padding(2)
-                 .AlignCenter().Text(label).FontSize(7)
-                 .FontColor(QuestPDF.Helpers.Colors.White);
-            });
         }
 
-        private static void SectionHeader(ColumnDescriptor col, string title, string color)
+        // ══════════════════════════════════════════════════════════════════════
+        //  Shared UI helpers
+        // ══════════════════════════════════════════════════════════════════════
+
+        /// <summary>Solid dark-maroon bar with white title text.</summary>
+        private static void SectionBar(ColumnDescriptor col, string title)
         {
-            col.Item().Background(color).PaddingHorizontal(4)
-                 .PaddingVertical(2)
-               .Text(title).FontSize(9).Bold()
-               .FontColor(QuestPDF.Helpers.Colors.White);
-            col.Item().PaddingTop(3);
+            col.Item()
+               .Background(C_SECTION)
+               .PaddingHorizontal(4).PaddingVertical(2)
+               .Text(title)
+               .FontSize(8f).Bold()
+               .FontColor(Colors.White);
+            col.Item().Height(2);
         }
 
-        private static void DetailRow(ColumnDescriptor col, string label, string? value)
+        /// <summary>Single label : value row on one line.</summary>
+        private static void FieldRow(ColumnDescriptor col, string label, string? value)
         {
             if (string.IsNullOrWhiteSpace(value)) return;
-            col.Item().PaddingBottom(2).Row(row =>
+
+            col.Item().PaddingBottom(1.5f).Row(row =>
             {
-                row.ConstantItem(110).Text(label + " :").FontSize(8)
-                   .FontColor(QuestPDF.Helpers.Colors.Grey.Darken2);
-                row.RelativeItem().Text(value).FontSize(8).Bold();
+                row.ConstantItem(105)
+                   .Text(label + " :")
+                   .FontSize(7.5f).FontColor(C_LABEL);
+
+                row.RelativeItem()
+                   .Text(value)
+                   .FontSize(7.5f).Bold().FontColor(C_VALUE);
             });
+        }
+
+        /// <summary>Label on its own line then value wrapping below (for long text).</summary>
+        private static void FieldRowWrap(ColumnDescriptor col, string label, string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return;
+
+            col.Item().PaddingBottom(1.5f).Column(c =>
+            {
+                c.Item().Text(label + " :")
+                        .FontSize(7.5f).FontColor(C_LABEL);
+                c.Item().PaddingLeft(4)
+                        .Text(value)
+                        .FontSize(7.5f).Bold().FontColor(C_VALUE);
+            });
+        }
+
+        /// <summary>Joins two nullable strings with a space, returning null if both empty.</summary>
+        private static string? Join(string? a, string? b)
+        {
+            var result = $"{a} {b}".Trim();
+            return string.IsNullOrWhiteSpace(result) ? null : result;
         }
     }
 }
