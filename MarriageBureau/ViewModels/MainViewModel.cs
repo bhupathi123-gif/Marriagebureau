@@ -22,7 +22,7 @@ namespace MarriageBureau.ViewModels
         private string _title = "Marriage Bureau - Management System";
 
         public AppUser CurrentUser { get; }
-
+        public bool IsAdmin => CurrentUser.Role == "Admin";
         public AppPage CurrentPage
         {
             get => _currentPage;
