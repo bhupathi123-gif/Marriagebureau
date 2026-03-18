@@ -1,3 +1,4 @@
+using System.Configuration;
 using System.Globalization;
 using System.IO;
 using System.Windows;
@@ -27,62 +28,142 @@ namespace MarriageBureau.Services
         // ── Public API ──────────────────────────────────────────────────────
 
         /// <summary>Generates and saves a PDF biodata card to <paramref name="outputPath"/>.</summary>
+        //public static void ExportToPdf(Biodata profile, List<string> photoPaths, string outputPath)
+        //{
+        //    var businessName = LicenceService.BusinessName;
+        //    var doc = Document.Create(container =>
+        //    {
+        //        container.Page(page =>
+        //        {
+        //            page.Size(PageSizes.A4);
+        //            page.Margin(24, Unit.Point);
+        //            page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial"));
+        //            page.Content().Element(c => ComposeBiodata(c, profile, photoPaths, businessName));
+
+        //            // Watermark on foreground
+        //            page.Foreground().Element(container =>
+        //            {
+        //                if (string.IsNullOrWhiteSpace(businessName))
+        //                    return;
+
+        //                var svg = BuildWatermarkSvg(PageSizes.A4.Width, PageSizes.A4.Height, businessName);
+
+        //                container
+        //                    .Width(PageSizes.A4.Width)
+        //                    .Height(PageSizes.A4.Height)
+        //                    .Svg(svg);
+        //            });
+
+        //        });
+        //    });
+        //    doc.GeneratePdf(outputPath);
+        //}
+
+        ///// <summary>Renders the first page of the PDF as a PNG/JPEG image.</summary>
+        //public static void ExportToImage(Biodata profile, List<string> photoPaths, string outputPath)
+        //{
+        //    var businessName = LicenceService.BusinessName;
+        //    var doc = Document.Create(container =>
+        //    {
+        //        container.Page(page =>
+        //        {
+        //            page.Size(PageSizes.A4);
+        //            page.Margin(24, Unit.Point);
+        //            page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial"));
+        //            page.Content().Element(c => ComposeBiodata(c, profile, photoPaths, businessName));
+
+        //            // Watermark on foreground
+        //            page.Foreground().Element(container =>
+        //            {
+        //                if (string.IsNullOrWhiteSpace(businessName))
+        //                    return;
+
+        //                var svg = BuildWatermarkSvg(PageSizes.A4.Width, PageSizes.A4.Height, businessName);
+
+        //                container
+        //                    .Width(PageSizes.A4.Width)
+        //                    .Height(PageSizes.A4.Height)
+        //                    .Svg(svg);
+        //            });
+        //        });
+        //    });
+
+        //    var images = doc.GenerateImages(new ImageGenerationSettings
+        //    {
+        //        RasterDpi = 150,
+        //        ImageFormat = ImageFormat.Jpeg,
+        //        ImageCompressionQuality = ImageCompressionQuality.High
+        //    });
+
+        //    if (images.Any())
+        //        File.WriteAllBytes(outputPath, images.First());
+        //}
+
+
         public static void ExportToPdf(Biodata profile, List<string> photoPaths, string outputPath)
         {
             var businessName = LicenceService.BusinessName;
+
             var doc = Document.Create(container =>
             {
                 container.Page(page =>
                 {
                     page.Size(PageSizes.A4);
-                    page.Margin(24, Unit.Point);
-                    page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial"));
-                    page.Content().Element(c => ComposeBiodata(c, profile, photoPaths, businessName));
 
-                    // Watermark on foreground
-                    page.Foreground().Element(container =>
+                    // IMPORTANT: margin 0 so background can cover full page
+                    page.Margin(0);
+
+                    page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial"));
+
+                    // Background layer (image or gradient)
+                    page.Background().Element(bg => DrawBackground(bg));
+
+                    // Content layer (apply your old margin here as padding)
+                    page.Content()
+                        .Padding(24, Unit.Point)
+                        .Element(c => ComposeBiodata(c, profile, photoPaths, businessName));
+
+                    // Foreground watermark (full page)
+                    page.Foreground().Element(fg =>
                     {
                         if (string.IsNullOrWhiteSpace(businessName))
                             return;
 
                         var svg = BuildWatermarkSvg(PageSizes.A4.Width, PageSizes.A4.Height, businessName);
 
-                        container
-                            .Width(PageSizes.A4.Width)
-                            .Height(PageSizes.A4.Height)
-                            .Svg(svg);
+                        fg.Extend().Svg(svg);
                     });
-
                 });
             });
+
             doc.GeneratePdf(outputPath);
         }
 
-        /// <summary>Renders the first page of the PDF as a PNG/JPEG image.</summary>
         public static void ExportToImage(Biodata profile, List<string> photoPaths, string outputPath)
         {
             var businessName = LicenceService.BusinessName;
+
             var doc = Document.Create(container =>
             {
                 container.Page(page =>
                 {
                     page.Size(PageSizes.A4);
-                    page.Margin(24, Unit.Point);
+                    page.Margin(0);
                     page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial"));
-                    page.Content().Element(c => ComposeBiodata(c, profile, photoPaths, businessName));
 
-                    // Watermark on foreground
-                    page.Foreground().Element(container =>
+                    page.Background().Element(bg => DrawBackground(bg));
+
+                    page.Content()
+                        .Padding(24, Unit.Point)
+                        .Element(c => ComposeBiodata(c, profile, photoPaths, businessName));
+
+                    page.Foreground().Element(fg =>
                     {
                         if (string.IsNullOrWhiteSpace(businessName))
                             return;
 
                         var svg = BuildWatermarkSvg(PageSizes.A4.Width, PageSizes.A4.Height, businessName);
-
-                        container
-                            .Width(PageSizes.A4.Width)
-                            .Height(PageSizes.A4.Height)
-                            .Svg(svg);
+                        fg.Extend().Svg(svg);
                     });
                 });
             });
@@ -98,11 +179,45 @@ namespace MarriageBureau.Services
                 File.WriteAllBytes(outputPath, images.First());
         }
 
+        private static void DrawBackground(IContainer c)
+        {
+            var bgPath = ConfigurationManager.AppSettings["BgImagePath"];
+
+            if (!string.IsNullOrWhiteSpace(bgPath) && File.Exists(bgPath))
+            {
+                // Use QuestPDF image rendering
+                var img = QuestPDF.Infrastructure.Image.FromFile(bgPath);
+
+                // Stretch to full page
+                c.Extend()
+                 .Image(img)
+                 .FitUnproportionally();
+
+                return;
+            }
+
+            //            // Fallback gradient background
+            //            const string gradientSvg = @"
+            //<svg xmlns='http://www.w3.org/2000/svg'
+            //     viewBox='0 0 1000 1000' preserveAspectRatio='none'>
+            //  <defs>
+            //    <linearGradient id='bg' x1='0' y1='0' x2='1' y2='1'>
+            //      <stop offset='0%'   stop-color='#F5D78E' />
+            //      <stop offset='50%'  stop-color='#E8B84B' />
+            //      <stop offset='100%' stop-color='#F5D78E' />
+            //    </linearGradient>
+            //  </defs>
+            //  <rect x='0' y='0' width='1000' height='1000' fill='url(#bg)' />
+            //</svg>";
+
+            //            c.Extend().Svg(gradientSvg);
+        }
+
         // ── Watermark ───────────────────────────────────────────────────────
-     
 
 
-private static string BuildWatermarkSvg(float width, float height, string text)
+
+        private static string BuildWatermarkSvg(float width, float height, string text)
     {
         text = EscapeXml(text);
 
@@ -134,114 +249,78 @@ private static string BuildWatermarkSvg(float width, float height, string text)
   </g>
 </svg>".Trim();
     }
+      
 
-    private static string EscapeXml(string value)
-    {
-        return value
-            .Replace("&", "&amp;")
-            .Replace("<", "&lt;")
-            .Replace(">", "&gt;")
-            .Replace("\"", "&quot;")
-            .Replace("'", "&apos;");
-    }
-
-    private static void DrawWatermark(
-            object canvasObject,
-            QuestPDF.Infrastructure.Size size,
-            string text)
+        private static string EscapeXml(string s)
         {
-            if (string.IsNullOrWhiteSpace(text)) return;
+            if (string.IsNullOrEmpty(s)) return string.Empty;
 
-            var canvas = (SKCanvas)canvasObject;
-
-            using var paint = new SKPaint
-            {
-                Color = new SKColor(160, 120, 200, 35),   // semi-transparent purple
-                TextSize = 48,
-                IsAntialias = true,
-                Typeface = SKTypeface.FromFamilyName(
-                    "Arial",
-                    SKFontStyle.Bold),
-                TextAlign = SKTextAlign.Center
-            };
-
-            float cx = size.Width / 2f;
-            float cy = size.Height / 2f;
-
-            canvas.Save();
-            canvas.Translate(cx, cy);
-            canvas.RotateDegrees(-35);
-
-            // Draw the text three times (top, middle, bottom) for a tiled feel
-            canvas.DrawText(text, 0, -size.Height * 0.25f, paint);
-            canvas.DrawText(text, 0, 0, paint);
-            canvas.DrawText(text, 0, size.Height * 0.25f, paint);
-
-            canvas.Restore();
+            return s.Replace("&", "&amp;")
+                    .Replace("<", "&lt;")
+                    .Replace(">", "&gt;")
+                    .Replace("\"", "&quot;")
+                    .Replace("'", "&apos;");
         }
+
+
 
         // ── Layout Builder ──────────────────────────────────────────────────
 
         private static void ComposeBiodata(
             IContainer root, Biodata p, List<string> photos, string businessName)
         {
-            bool isFemale = p.Gender?.ToUpper() == "FEMALE";
-            var accentColor = isFemale
-                ? QuestPDF.Helpers.Colors.Pink.Darken3
-                : QuestPDF.Helpers.Colors.Blue.Darken3;
-            var lightAccent = isFemale
-                ? QuestPDF.Helpers.Colors.Pink.Lighten4
-                : QuestPDF.Helpers.Colors.Blue.Lighten4;
+            //bool isFemale = p.Gender?.ToUpper() == "FEMALE";
+            //var accentColor = isFemale
+            //    ? QuestPDF.Helpers.Colors.Pink.Darken3
+            //    : QuestPDF.Helpers.Colors.Blue.Darken3;
+            //var lightAccent = isFemale
+            //    ? QuestPDF.Helpers.Colors.Pink.Lighten4
+            //    : QuestPDF.Helpers.Colors.Blue.Lighten4;
+
+            var accentColor = QuestPDF.Helpers.Colors.Purple.Lighten1;
 
             root.Column(col =>
             {
                 // ── Header banner ─────────────────────────────────────────
-                col.Item().Background(accentColor).Padding(10).Row(row =>
+                col.Item().PaddingVertical(35).Padding(10).Row(row =>
                 {
                     row.RelativeItem().Column(hCol =>
                     {
                         // Business name tag
-                        if (!string.IsNullOrWhiteSpace(businessName))
-                        {
-                            hCol.Item()
-                                .Text(businessName.ToUpper())
-                                .FontSize(8)
-                                .FontColor(QuestPDF.Helpers.Colors.White)
-                                .Italic();
-                        }
 
-                        hCol.Item().Text("✦  Marriage Biodata  ✦")
-                            .FontSize(7).FontColor(QuestPDF.Helpers.Colors.White).Italic();
-                        hCol.Item().Text(p.Name.ToUpper())
-                            .FontSize(18).FontColor(QuestPDF.Helpers.Colors.White).Bold();
-                        hCol.Item().PaddingTop(3).Row(r2 =>
-                        {
-                            r2.AutoItem().Background(lightAccent).PaddingVertical(1)
-                                .PaddingHorizontal(3)
-                              .Text(p.Gender?.ToUpper() ?? "")
-                              .FontSize(8).FontColor(accentColor).Bold();
+                        hCol.Item()
+                              .AlignCenter()
+                              .Text(p.Name.ToUpper())
+                              .FontSize(32)
+                              .FontColor("#800000")
+                              .Bold();
 
-                            if (!string.IsNullOrWhiteSpace(p.AgeDisplay))
-                                r2.AutoItem().PaddingLeft(8)
-                                  .Text($"Age: {p.AgeDisplay}")
-                                  .FontSize(8).FontColor(QuestPDF.Helpers.Colors.White);
+                        //hCol.Item().PaddingTop(3).Row(r2 =>
+                        //{
+                        //    //r2.AutoItem().Background(lightAccent).PaddingVertical(1)
+                        //    //    .PaddingHorizontal(3)
+                        //    //  .Text(p.Gender?.ToUpper() ?? "")
+                        //    //  .FontSize(8).FontColor(accentColor).Bold();
 
-                            if (!string.IsNullOrWhiteSpace(p.Caste))
-                                r2.AutoItem().PaddingLeft(8)
-                                  .Text($"Caste: {p.Caste}")
-                                  .FontSize(8).FontColor(QuestPDF.Helpers.Colors.White);
+                        //    //if (!string.IsNullOrWhiteSpace(p.AgeDisplay))
+                        //    //    r2.AutoItem().PaddingLeft(8)
+                        //    //      .Text($"Age: {p.AgeDisplay}")
+                        //    //      .FontSize(8).FontColor(QuestPDF.Helpers.Colors.White);
 
-                            // Status badge
-                            r2.AutoItem().PaddingLeft(8)
-                              .Text($"Status: {p.Status}")
-                              .FontSize(8).FontColor(QuestPDF.Helpers.Colors.White);
-                        });
+                        //    //if (!string.IsNullOrWhiteSpace(p.Caste))
+                        //    //    r2.AutoItem().PaddingLeft(8)
+                        //    //      .Text($"Caste: {p.Caste}")
+                        //    //      .FontSize(8).FontColor(QuestPDF.Helpers.Colors.White);
+
+                        //    //// Status badge
+                        //    //r2.AutoItem().PaddingLeft(8)
+                        //    //  .Text($"Status: {p.Status}")
+                        //    //  .FontSize(8).FontColor(QuestPDF.Helpers.Colors.White);
+                        //});
                     });
 
                     // OM symbol
-                    row.AutoItem().AlignMiddle().AlignRight()
-                       .Text("ॐ").FontSize(32)
-                       .FontColor(QuestPDF.Helpers.Colors.White).Bold();
+                   
                 });
 
                 col.Item().PaddingVertical(6);
@@ -323,16 +402,16 @@ private static string BuildWatermarkSvg(float width, float height, string text)
                 });
 
                 // ── Expectations ─────────────────────────────────────────
-                if (!string.IsNullOrWhiteSpace(p.ExpectationsFromPartner))
-                {
-                    col.Item().PaddingTop(8);
-                    col.Item().Background(lightAccent).Padding(6).Column(exp =>
-                    {
-                        exp.Item().Text("Partner Expectations").Bold()
-                           .FontSize(9).FontColor(accentColor);
-                        exp.Item().PaddingTop(2).Text(p.ExpectationsFromPartner).FontSize(8);
-                    });
-                }
+                //if (!string.IsNullOrWhiteSpace(p.ExpectationsFromPartner))
+                //{
+                //    col.Item().PaddingTop(8);
+                //    col.Item().Background(lightAccent).Padding(6).Column(exp =>
+                //    {
+                //        exp.Item().Text("Partner Expectations").Bold()
+                //           .FontSize(9).FontColor(accentColor);
+                //        exp.Item().PaddingTop(2).Text(p.ExpectationsFromPartner).FontSize(8);
+                //    });
+                //}
 
                 // ── Footer ────────────────────────────────────────────────
                 col.Item().PaddingTop(10);
