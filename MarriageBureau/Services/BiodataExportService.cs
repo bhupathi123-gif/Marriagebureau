@@ -154,7 +154,7 @@ namespace MarriageBureau.Services
                     page.Background().Element(bg => DrawBackground(bg));
 
                     page.Content()
-                        .Padding(24, Unit.Point)
+                        .Padding(20, Unit.Point)
                         .Element(c => ComposeBiodata(c, profile, photoPaths, businessName));
 
                     page.Foreground().Element(fg =>
@@ -277,12 +277,12 @@ namespace MarriageBureau.Services
             //    ? QuestPDF.Helpers.Colors.Pink.Lighten4
             //    : QuestPDF.Helpers.Colors.Blue.Lighten4;
 
-            var accentColor = QuestPDF.Helpers.Colors.Purple.Lighten1;
+            var accentColor = "#800000";
 
             root.Column(col =>
             {
                 // ── Header banner ─────────────────────────────────────────
-                col.Item().PaddingVertical(35).Padding(10).Row(row =>
+                col.Item().PaddingVertical(50).Row(row =>
                 {
                     row.RelativeItem().Column(hCol =>
                     {
@@ -291,7 +291,7 @@ namespace MarriageBureau.Services
                         hCol.Item()
                               .AlignCenter()
                               .Text(p.Name.ToUpper())
-                              .FontSize(32)
+                              .FontSize(28)
                               .FontColor("#800000")
                               .Bold();
 
@@ -320,10 +320,10 @@ namespace MarriageBureau.Services
                     });
 
                     // OM symbol
-                   
+
                 });
 
-                col.Item().PaddingVertical(6);
+                col.Item().PaddingVertical(3);
 
                 // ── Two Photos Side by Side ───────────────────────────────
                 var photo1 = photos.Count > 0 ? photos[0] : null;
@@ -343,7 +343,7 @@ namespace MarriageBureau.Services
                 }
 
                 // ── Detail Sections ──────────────────────────────────────
-                col.Item().Row(mainRow =>
+                col.Item().Padding(3).Row(mainRow =>
                 {
                     // Left column
                     mainRow.RelativeItem().Column(left =>
@@ -414,20 +414,20 @@ namespace MarriageBureau.Services
                 //}
 
                 // ── Footer ────────────────────────────────────────────────
-                col.Item().PaddingTop(10);
-                col.Item().BorderTop(1).BorderColor(accentColor)
-                   .PaddingTop(4)
-                   .Row(footer =>
-                   {
-                       footer.RelativeItem()
-                             .Text($"Generated on {DateTime.Now:dd-MMM-yyyy}")
-                             .FontSize(7).FontColor(QuestPDF.Helpers.Colors.Grey.Medium);
-                       footer.RelativeItem().AlignRight()
-                             .Text(string.IsNullOrWhiteSpace(businessName)
-                                 ? "Marriage Bureau Management System"
-                                 : businessName)
-                             .FontSize(7).FontColor(QuestPDF.Helpers.Colors.Grey.Medium);
-                   });
+                //col.Item().PaddingTop(10);
+                //col.Item().BorderTop(1).BorderColor(accentColor)
+                //   .PaddingTop(4)
+                //   .Row(footer =>
+                //   {
+                //       footer.RelativeItem()
+                //             .Text($"Generated on {DateTime.Now:dd-MMM-yyyy}")
+                //             .FontSize(7).FontColor(QuestPDF.Helpers.Colors.Grey.Medium);
+                //       footer.RelativeItem().AlignRight()
+                //             .Text(string.IsNullOrWhiteSpace(businessName)
+                //                 ? "Marriage Bureau Management System"
+                //                 : businessName)
+                //             .FontSize(7).FontColor(QuestPDF.Helpers.Colors.Grey.Medium);
+                //   });
             });
         }
 
@@ -437,22 +437,59 @@ namespace MarriageBureau.Services
         {
             container.Border(1).BorderColor(borderColor).Column(c =>
             {
-                c.Item().Height(155).Element(img =>
+                c.Item().Height(155).Element(box =>
                 {
+                    // Center contents (works for both image + placeholder)
+                    var centered = box.AlignCenter().AlignMiddle();
+
                     if (!string.IsNullOrWhiteSpace(photoPath) && File.Exists(photoPath))
                     {
-                        try { img.Image(photoPath).FitArea(); return; }
-                        catch { }
+                        try
+                        {
+                            centered.Image(photoPath).FitArea();
+                            return;
+                        }
+                        catch
+                        {
+                            // fall through to placeholder
+                        }
                     }
-                    img.AlignCenter().AlignMiddle()
-                       .Text("[ No Photo ]").FontSize(8)
-                       .FontColor(QuestPDF.Helpers.Colors.Grey.Medium);
+
+                    centered
+                        .Text("[ No Photo ]")
+                        .FontSize(8)
+                        .FontColor(QuestPDF.Helpers.Colors.Grey.Medium);
                 });
-                c.Item().Background(borderColor).Padding(2)
-                 .AlignCenter().Text(label).FontSize(7)
-                 .FontColor(QuestPDF.Helpers.Colors.White);
+
+                c.Item()
+                    .Background(borderColor).Padding(2)
+                    .AlignCenter()
+                    .Text(label).FontSize(7)
+                    .FontColor(QuestPDF.Helpers.Colors.White);
             });
         }
+
+
+        //private static void AddPhotoBox(IContainer container, string? photoPath, string label, string borderColor)
+        //{
+        //    container.Border(1).BorderColor(borderColor).Column(c =>
+        //    {
+        //        c.Item().Height(155).Element(img =>
+        //        {
+        //            if (!string.IsNullOrWhiteSpace(photoPath) && File.Exists(photoPath))
+        //            {
+        //                try { img.Image(photoPath).FitArea(); return; }
+        //                catch { }
+        //            }
+        //            img.AlignCenter().AlignMiddle()
+        //               .Text("[ No Photo ]").FontSize(8)
+        //               .FontColor(QuestPDF.Helpers.Colors.Grey.Medium);
+        //        });
+        //        c.Item().Background(borderColor).Padding(2)
+        //         .AlignCenter().Text(label).FontSize(7)
+        //         .FontColor(QuestPDF.Helpers.Colors.White);
+        //    });
+        //}
 
         private static void SectionHeader(ColumnDescriptor col, string title, string color)
         {
@@ -468,9 +505,9 @@ namespace MarriageBureau.Services
             if (string.IsNullOrWhiteSpace(value)) return;
             col.Item().PaddingBottom(2).Row(row =>
             {
-                row.ConstantItem(110).Text(label + " :").FontSize(8)
-                   .FontColor(QuestPDF.Helpers.Colors.Grey.Darken2);
-                row.RelativeItem().Text(value).FontSize(8).Bold();
+                row.ConstantItem(110).Text(label + " :").FontSize(12)
+                   .FontColor("#800000");
+                row.RelativeItem().Text(value).FontColor("#800000").FontSize(12).Bold();
             });
         }
     }
