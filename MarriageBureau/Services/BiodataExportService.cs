@@ -382,9 +382,9 @@ namespace MarriageBureau.Services
                         DetailRow(right, "Mother's Name", p.MotherName);
                         DetailRow(right, "Mother's Occupation", p.MotherOccupation);
                         DetailRow(right, "Brothers", p.BrotherCount);
-                        DetailRow(right, "Brother Occupation", p.BrotherOccupation);
+                        DetailRow(right, "Brother's Name", p.BrotherOccupation);
                         DetailRow(right, "Sisters", p.SisterCount);
-                        DetailRow(right, "Sister Occupation", p.SisterOccupation);
+                        DetailRow(right, "Sister's Name", p.SisterOccupation);
                         DetailRow(right, "Grand Father", p.GrandFatherName);
                         DetailRow(right, "Elder Father", p.ElderFather);
 

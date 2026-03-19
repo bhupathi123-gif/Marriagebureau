@@ -38,12 +38,12 @@
 
             <!-- App Title -->
             <StackPanel DockPanel.Dock="Top" Margin="0,0,0,10">
-                <TextBlock Text="💍" FontSize="40" HorizontalAlignment="Center" Margin="0,20,0,5"/>
-                <TextBlock Text="Marriage Bureau" Foreground="White"
+                <TextBlock Text="💍" FontSize="40"  Foreground="DarkGoldenrod" HorizontalAlignment="Center" Margin="0,20,0,5"/>
+                <TextBlock Text="Trishul Matrimony" Foreground="White"
                            FontSize="16" FontWeight="Bold"
                            HorizontalAlignment="Center" TextWrapping="Wrap"
                            TextAlignment="Center" Margin="10,0"/>
-                <TextBlock Text="Management System" Foreground="#CE93D8"
+                <TextBlock Text="" Foreground="#CE93D8"
                            FontSize="11" HorizontalAlignment="Center"
                            Margin="10,2,10,10"/>
                 <Separator Background="#7B1FA2"/>

@@ -50,7 +50,7 @@
         </Grid.RowDefinitions>
 
         <!-- ═══ Top Controls Bar ═════════════════════════════════════ -->
-        <Border Grid.Row="0" Background="#2D0A4E" Padding="16,10">
+        <Border Grid.Row="0" Background="#4A148C" Padding="16,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
