@@ -16,7 +16,7 @@ namespace MarriageBureau.Services
         // immediately visible and can be used as a lookup key.
         private static readonly (string Header, Func<Biodata, string?> Getter)[] Columns =
         {
-            ("PROFILE ID",            b => b.ProfileId),
+            ("TMID",            b => b.ProfileId),
             ("S.NO.",                 null!),   // filled in by loop
             ("NAME",                  b => b.Name),
             ("GENDER",                b => b.Gender),
@@ -46,7 +46,7 @@ namespace MarriageBureau.Services
             ("SISTER",                b => b.SisterCount),
             ("BROTHER IN LAW",        b => b.BrotherInLaw),
             ("GRAND FATHER NAME",     b => b.GrandFatherName),
-            ("ELDER FATHER",          b => b.ElderFather),
+            ("UNCLE",          b => b.ElderFather),
             ("PHONE",                 b => b.ElderFatherPhone),
             ("D.NO.",                 b => b.DoorNumber),
             ("ADRESS",                b => b.AddressLine),
@@ -68,18 +68,18 @@ namespace MarriageBureau.Services
         /// </summary>
         public static void Export(IEnumerable<Biodata> profiles, string outputPath)
         {
-            var male   = profiles.Where(p => p.Gender?.ToUpper() == "MALE").OrderBy(p => p.Name).ToList();
-            var female = profiles.Where(p => p.Gender?.ToUpper() == "FEMALE").OrderBy(p => p.Name).ToList();
-            // Any profile that is neither MALE nor FEMALE goes into a catch-all "OTHER" sheet
-            var other  = profiles.Where(p => p.Gender?.ToUpper() != "MALE" && p.Gender?.ToUpper() != "FEMALE")
-                                  .OrderBy(p => p.Name).ToList();
+            //var male   = profiles.Where(p => p.Gender?.ToUpper() == "MALE").OrderBy(p => p.Name).ToList();
+            //var female = profiles.Where(p => p.Gender?.ToUpper() == "FEMALE").OrderBy(p => p.Name).ToList();
+            //// Any profile that is neither MALE nor FEMALE goes into a catch-all "OTHER" sheet
+            //var other  = profiles.Where(p => p.Gender?.ToUpper() != "MALE" && p.Gender?.ToUpper() != "FEMALE")
+            //                      .OrderBy(p => p.Name).ToList();
 
             using var wb = new XLWorkbook();
 
-            WriteSheet(wb, "MALE",   male);
-            WriteSheet(wb, "FEMALE", female);
-            if (other.Count > 0)
-                WriteSheet(wb, "OTHER", other);
+            WriteSheet(wb, "PROFILES",   profiles.ToList());
+            //WriteSheet(wb, "FEMALE", female);
+            //if (other.Count > 0)
+            //    WriteSheet(wb, "OTHER", other);
 
             wb.SaveAs(outputPath);
         }

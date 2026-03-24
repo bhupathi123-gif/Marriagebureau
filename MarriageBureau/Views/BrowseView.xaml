@@ -157,7 +157,7 @@
 
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="#"          Binding="{Binding Id}"        Width="50"/>
-                        <DataGridTextColumn Header="Profile ID" Binding="{Binding ProfileId}" Width="80"/>
+                        <DataGridTextColumn Header="TMID" Binding="{Binding ProfileId}" Width="80"/>
 
                         <!-- Photo column -->
                         <DataGridTemplateColumn Header="Photo" Width="54">

@@ -322,8 +322,7 @@
                                         </StackPanel>
                                         <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="#555"
                                                    Margin="0,0,0,8">
-                                            Biodata on page 1 (single-column, auto 2-column if dense).
-                                            Each photo on its own full page at the end.
+                                            Biodata on page 1. Each photo on its own full page at the end.
                                         </TextBlock>
                                         <Button Command="{Binding ExportPdfCommand}"
                                                 Style="{StaticResource MaterialDesignRaisedButton}"
@@ -337,7 +336,7 @@
                                 </Border>
 
                                 <!-- Image info -->
-                                <Border Grid.Column="2" Background="#E8F5E9" CornerRadius="8" Padding="14">
+                                <!--<Border Grid.Column="2" Background="#E8F5E9" CornerRadius="8" Padding="14">
                                     <StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                             <materialDesign:PackIcon Kind="ImageMultiple" Foreground="#2E7D32"
@@ -361,7 +360,7 @@
                                             </StackPanel>
                                         </Button>
                                     </StackPanel>
-                                </Border>
+                                </Border>-->
                             </Grid>
                         </materialDesign:Card>
 

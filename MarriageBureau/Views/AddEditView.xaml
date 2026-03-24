@@ -379,13 +379,13 @@
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="0,0,12,0">
-                            <TextBlock Text="Elder Father (Uncle)" Style="{StaticResource FormLabel}"/>
+                            <TextBlock Text="UNCLE" Style="{StaticResource FormLabel}"/>
                             <TextBox Text="{Binding Biodata.ElderFather, UpdateSourceTrigger=PropertyChanged}"
-                                     materialDesign:HintAssist.Hint="Elder father's name"
+                                     materialDesign:HintAssist.Hint="UNCLE's name"
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="2">
-                            <TextBlock Text="Elder Father Phone" Style="{StaticResource FormLabel}"/>
+                            <TextBlock Text="UNCLE Phone" Style="{StaticResource FormLabel}"/>
                             <TextBox Text="{Binding Biodata.ElderFatherPhone, UpdateSourceTrigger=PropertyChanged}"
                                      materialDesign:HintAssist.Hint="Phone number"
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}"/>

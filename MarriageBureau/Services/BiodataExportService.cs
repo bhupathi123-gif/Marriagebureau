@@ -254,7 +254,7 @@ namespace MarriageBureau.Services
         {
             // Name row
             col.Item()
-               .PaddingTop(8)
+               .PaddingTop(10)
                .AlignCenter()
                .Text(p.Name.ToUpper())
                .FontSize(24)
@@ -266,7 +266,7 @@ namespace MarriageBureau.Services
             {
                 col.Item()
                    .AlignCenter()
-                   .Text($"Profile ID: {p.ProfileId}")
+                   .Text($"TMID: {p.ProfileId}")
                    .FontSize(11)
                    .FontColor(AccentColor);
             }
@@ -292,14 +292,14 @@ namespace MarriageBureau.Services
                    .PaddingVertical(3)
                    .AlignCenter()
                    .Text(section.Title)
-                   .FontSize(10)
+                   .FontSize(14)
                    .Bold()
                    .FontColor(QuestPDF.Helpers.Colors.White);
 
                 col.Item().PaddingTop(3);
 
                 foreach (var f in fields)
-                    RenderFieldRow(col, f.Label, f.Value, 120, 11);
+                    RenderFieldRow(col, f.Label, f.Value, 120, 14);
             }
         }
 
@@ -358,14 +358,14 @@ namespace MarriageBureau.Services
                    .PaddingVertical(3)
                    .AlignCenter()
                    .Text(section.Title)
-                   .FontSize(9)
+                   .FontSize(14)
                    .Bold()
                    .FontColor(QuestPDF.Helpers.Colors.White);
 
                 col.Item().PaddingTop(2);
 
                 foreach (var f in fields)
-                    RenderFieldRow(col, f.Label, f.Value, labelWidth, fontSize: 9);
+                    RenderFieldRow(col, f.Label, f.Value, labelWidth, fontSize: 14);
             }
         }
 
@@ -374,7 +374,7 @@ namespace MarriageBureau.Services
         private static void RenderFieldRow(
             ColumnDescriptor col, string label, string value, int labelWidth, int fontSize)
         {
-            col.Item().PaddingBottom(2).Row(row =>
+            col.Item().PaddingLeft(2).PaddingBottom(2).Row(row =>
             {
                 row.ConstantItem(labelWidth)
                    .Text(label + " :")
@@ -435,7 +435,7 @@ namespace MarriageBureau.Services
                     new("Sisters",             p.SisterCount      ?? ""),
                     new("Sister's Name",       p.SisterOccupation ?? ""),
                     new("Grand Father",        p.GrandFatherName  ?? ""),
-                    new("Elder Father",        p.ElderFather      ?? ""),
+                    new("Uncle",        p.ElderFather      ?? ""),
                 }),
                 new("Address & Contact", new List<FieldEntry>
                 {
