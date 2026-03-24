@@ -38,7 +38,7 @@ namespace MarriageBureau
 
             // Launch main window
             var mainWindow = new MainWindow(user);
-            MainWindow = mainWindow;
+            MainWindow = mainWindow;          
             mainWindow.Show();
         }
     }

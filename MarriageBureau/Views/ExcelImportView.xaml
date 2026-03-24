@@ -20,7 +20,7 @@
         </Grid.RowDefinitions>
 
         <!-- ═══ Header Bar ═══════════════════════════════════════════ -->
-        <Border Grid.Row="0" Background="#1B5E20" Padding="20,14">
+        <Border Grid.Row="0" Background="#4A148C" Padding="20,14">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
