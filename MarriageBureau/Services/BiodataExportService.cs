@@ -282,7 +282,7 @@ namespace MarriageBureau.Services
             root.Column(col =>
             {
                 // ── Header banner ─────────────────────────────────────────
-                col.Item().PaddingVertical(50).Row(row =>
+                col.Item().PaddingVertical(70).Row(row =>
                 {
                     row.RelativeItem().Column(hCol =>
                     {
@@ -323,7 +323,7 @@ namespace MarriageBureau.Services
 
                 });
 
-                col.Item().PaddingVertical(3);
+                col.Item().PaddingVertical(0);
 
                 // ── Two Photos Side by Side ───────────────────────────────
                 var photo1 = photos.Count > 0 ? photos[0] : null;

@@ -320,12 +320,7 @@
                                                        FontSize="14" Foreground="Crimson"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
-                                        <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="#555"
-                                                   Margin="0,0,0,8">
-                                            A4-size professional marriage biodata with coloured header,
-                                            two photos side-by-side, all personal/horoscope/family/contact
-                                            details in a clean two-column layout.
-                                        </TextBlock>
+                                      
                                         <Button Command="{Binding ExportPdfCommand}"
                                                 Style="{StaticResource MaterialDesignRaisedButton}"
                                                 Background="Crimson" HorizontalAlignment="Stretch">
@@ -338,8 +333,8 @@
                                 </Border>
 
                                 <!-- Image info -->
-                                <Border Grid.Column="2" Background="#E8F5E9" CornerRadius="8" Padding="14">
-                                    <StackPanel>
+                                <!--<Border Grid.Column="2" Background="#E8F5E9" CornerRadius="8" Padding="14">
+                                    --><!--<StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                             <materialDesign:PackIcon Kind="Image" Foreground="#2E7D32"
                                                                      Width="24" Height="24" Margin="0,0,8,0"/>
@@ -361,8 +356,8 @@
                                                 <TextBlock Text="Export as Image"/>
                                             </StackPanel>
                                         </Button>
-                                    </StackPanel>
-                                </Border>
+                                    </StackPanel>--><!--
+                                </Border>-->
                             </Grid>
                         </materialDesign:Card>
 
@@ -392,7 +387,7 @@
                                TextWrapping="Wrap"/>
                 </StackPanel>
 
-                <Button Grid.Column="1" Command="{Binding OpenExportCommand}"
+                <!--<Button Grid.Column="1" Command="{Binding OpenExportCommand}"
                         Style="{StaticResource MaterialDesignRaisedButton}"
                         Background="#880E4F"
                         Visibility="{Binding HasExportFile, Converter={StaticResource BoolToVis}}">
@@ -400,7 +395,7 @@
                         <materialDesign:PackIcon Kind="OpenInNew" Margin="0,0,8,0"/>
                         <TextBlock Text="Open Exported File"/>
                     </StackPanel>
-                </Button>
+                </Button>-->
             </Grid>
         </materialDesign:Card>
     </Grid>

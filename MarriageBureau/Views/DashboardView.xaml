@@ -80,7 +80,7 @@
                 </materialDesign:Card>
 
                 <!-- With PDFs -->
-                <materialDesign:Card Margin="4" Padding="16"
+                <!--<materialDesign:Card Margin="4" Padding="16"
                     UniformCornerRadius="12"
                     materialDesign:ElevationAssist.Elevation="Dp3">
                     <StackPanel HorizontalAlignment="Center">
@@ -91,7 +91,7 @@
                         <TextBlock Text="With PDFs" FontSize="12" Foreground="Gray"
                                    HorizontalAlignment="Center"/>
                     </StackPanel>
-                </materialDesign:Card>
+                </materialDesign:Card>-->
             </UniformGrid>
 
             <!-- Quick Action Buttons -->

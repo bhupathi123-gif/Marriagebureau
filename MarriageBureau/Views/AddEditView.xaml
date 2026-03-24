@@ -44,15 +44,16 @@
                                FontSize="12" Foreground="#CE93D8"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Command="{Binding ImportFromPdfCommand}"
+                    <!--<Button Command="{Binding ImportFromPdfCommand}"
                             Style="{StaticResource MaterialDesignOutlinedButton}"
                             Foreground="White" BorderBrush="White" Margin="0,0,10,0"
-                            ToolTip="Import data from a marriage biodata PDF">
+                            ToolTip="Import data from a marriage biodata PDF"
+                            Visibility="Hidden">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="FileImport" Margin="0,0,6,0"/>
                             <TextBlock Text="Import from PDF"/>
                         </StackPanel>
-                    </Button>
+                    </Button>-->
                     <Button Command="{Binding ExportCommand}"
                             Style="{StaticResource MaterialDesignOutlinedButton}"
                             Foreground="White" BorderBrush="White" Margin="0,0,10,0"
@@ -674,7 +675,7 @@
                     </materialDesign:Card>
 
                     <!-- PDF Upload Card -->
-                    <materialDesign:Card Padding="16" UniformCornerRadius="10"
+                    <materialDesign:Card Visibility="Hidden" Padding="16" UniformCornerRadius="10"
                                          materialDesign:ElevationAssist.Elevation="Dp3">
                         <StackPanel>
                             <TextBlock Text="📄  Biodata PDF" FontWeight="Bold" FontSize="14"
