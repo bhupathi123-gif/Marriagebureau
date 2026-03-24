@@ -54,6 +54,16 @@
                         <TextBlock Text="Import Excel"/>
                     </StackPanel>
                 </Button>
+                <Button Command="{Binding ExportExcelCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Margin="0,0,8,0"
+                        ToolTip="Export current filtered profiles to Excel"
+                        Foreground="#1565C0" BorderBrush="#1565C0">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="FileExcelOutline" Margin="0,0,8,0"/>
+                        <TextBlock Text="Export Excel"/>
+                    </StackPanel>
+                </Button>
                 <Button Command="{Binding AddNewCommand}"
                         Style="{StaticResource MaterialDesignRaisedButton}"
                         Background="#4A148C">

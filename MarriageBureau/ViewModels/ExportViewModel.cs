@@ -238,23 +238,30 @@ namespace MarriageBureau.ViewModels
             if (dlg.ShowDialog() != true) return;
 
             IsExporting   = true;
-            StatusMessage = asImage ? "Generating image…" : "Generating PDF…";
+            StatusMessage = asImage ? "Generating images…" : "Generating PDF…";
 
             try
             {
-                var photos = PhotoPaths.Take(2).ToList();
+                var photos  = PhotoPaths.ToList();   // all photos, not just first 2
                 var outPath = dlg.FileName;
+
+                List<string> generatedFiles = new();
 
                 await Task.Run(() =>
                 {
                     if (asImage)
-                        BiodataExportService.ExportToImage(SelectedProfile, photos, outPath);
+                        generatedFiles = BiodataExportService.ExportToImages(SelectedProfile, photos, outPath);
                     else
                         BiodataExportService.ExportToPdf(SelectedProfile, photos, outPath);
                 });
 
                 LastExportPath = outPath;
-                StatusMessage  = $"Exported successfully → {Path.GetFileName(outPath)}";
+
+                if (asImage && generatedFiles.Count > 1)
+                    StatusMessage = $"Exported {generatedFiles.Count} images → {Path.GetDirectoryName(outPath)}";
+                else
+                    StatusMessage = $"Exported successfully → {Path.GetFileName(outPath)}";
+
                 CommandManager.InvalidateRequerySuggested();
             }
             catch (Exception ex)

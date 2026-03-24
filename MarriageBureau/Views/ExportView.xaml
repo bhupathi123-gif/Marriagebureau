@@ -210,7 +210,7 @@
                         <materialDesign:Card Padding="16" UniformCornerRadius="10" Margin="0,0,0,12"
                                              materialDesign:ElevationAssist.Elevation="Dp2">
                             <StackPanel>
-                                <TextBlock Text="📸  Photos included in export (first 2 photos)"
+                                <TextBlock Text="📸  Photos included in export (all photos)"
                                            FontWeight="Bold" Foreground="#880E4F" Margin="0,0,0,12"/>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -320,7 +320,11 @@
                                                        FontSize="14" Foreground="Crimson"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
-                                      
+                                        <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="#555"
+                                                   Margin="0,0,0,8">
+                                            Biodata on page 1 (single-column, auto 2-column if dense).
+                                            Each photo on its own full page at the end.
+                                        </TextBlock>
                                         <Button Command="{Binding ExportPdfCommand}"
                                                 Style="{StaticResource MaterialDesignRaisedButton}"
                                                 Background="Crimson" HorizontalAlignment="Stretch">
@@ -333,10 +337,10 @@
                                 </Border>
 
                                 <!-- Image info -->
-                                <!--<Border Grid.Column="2" Background="#E8F5E9" CornerRadius="8" Padding="14">
-                                    --><!--<StackPanel>
+                                <Border Grid.Column="2" Background="#E8F5E9" CornerRadius="8" Padding="14">
+                                    <StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                            <materialDesign:PackIcon Kind="Image" Foreground="#2E7D32"
+                                            <materialDesign:PackIcon Kind="ImageMultiple" Foreground="#2E7D32"
                                                                      Width="24" Height="24" Margin="0,0,8,0"/>
                                             <TextBlock Text="Image Export" FontWeight="Bold"
                                                        FontSize="14" Foreground="#2E7D32"
@@ -344,20 +348,20 @@
                                         </StackPanel>
                                         <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="#555"
                                                    Margin="0,0,0,8">
-                                            Same beautiful biodata layout rendered as a high-resolution
-                                            JPEG image (150 DPI) — easy to share on WhatsApp, email
-                                            or print.
+                                            Generates multiple JPEG images (150 DPI):
+                                            1 biodata image + 1 image per photo.
+                                            Files are saved alongside the chosen file name.
                                         </TextBlock>
                                         <Button Command="{Binding ExportImageCommand}"
                                                 Style="{StaticResource MaterialDesignRaisedButton}"
                                                 Background="#2E7D32" HorizontalAlignment="Stretch">
                                             <StackPanel Orientation="Horizontal">
                                                 <materialDesign:PackIcon Kind="Download" Margin="0,0,8,0"/>
-                                                <TextBlock Text="Export as Image"/>
+                                                <TextBlock Text="Export as Images"/>
                                             </StackPanel>
                                         </Button>
-                                    </StackPanel>--><!--
-                                </Border>-->
+                                    </StackPanel>
+                                </Border>
                             </Grid>
                         </materialDesign:Card>
 
