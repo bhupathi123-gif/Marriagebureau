@@ -54,6 +54,16 @@
                         <TextBlock Text="Import Excel"/>
                     </StackPanel>
                 </Button>
+                <Button Command="{Binding ExportExcelCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Margin="0,0,8,0"
+                        ToolTip="Export current filtered profiles to Excel"
+                        Foreground="#1565C0" BorderBrush="#1565C0">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="FileExcelOutline" Margin="0,0,8,0"/>
+                        <TextBlock Text="Export Excel"/>
+                    </StackPanel>
+                </Button>
                 <Button Command="{Binding AddNewCommand}"
                         Style="{StaticResource MaterialDesignRaisedButton}"
                         Background="#4A148C">
@@ -80,7 +90,7 @@
 
                 <TextBox Grid.Column="0"
                          Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                         materialDesign:HintAssist.Hint="🔍  Search by name, phone, caste, district..."
+                         materialDesign:HintAssist.Hint="🔍  Search by profile ID, name, phone, caste, district..."
                          Style="{StaticResource MaterialDesignOutlinedTextBox}"
                          Margin="0,0,8,0"/>
 
@@ -146,7 +156,8 @@
                     </DataGrid.RowStyle>
 
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="#" Binding="{Binding Id}" Width="50"/>
+                        <DataGridTextColumn Header="#"          Binding="{Binding Id}"        Width="50"/>
+                        <DataGridTextColumn Header="TMID" Binding="{Binding ProfileId}" Width="80"/>
 
                         <!-- Photo column -->
                         <DataGridTemplateColumn Header="Photo" Width="54">

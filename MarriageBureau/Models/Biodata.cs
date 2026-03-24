@@ -21,6 +21,12 @@ namespace MarriageBureau.Models
         [Key]
         public int Id { get; set; }
 
+        /// <summary>
+        /// Human-readable profile identifier, e.g. "TS001".
+        /// Generated on first save as: prefix (from App.config "ProfileIdPrefix") + sequential number.
+        /// </summary>
+        public string? ProfileId { get; set; }
+
         // ─── Personal Info ────────────────────────────────────────────────
         [Required]
         public string Name { get; set; } = string.Empty;

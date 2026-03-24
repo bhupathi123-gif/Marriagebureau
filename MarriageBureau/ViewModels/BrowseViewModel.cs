@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using MarriageBureau.Data;
 using MarriageBureau.Models;
+using MarriageBureau.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace MarriageBureau.ViewModels
@@ -70,14 +71,15 @@ namespace MarriageBureau.ViewModels
         public int FemaleCount   => _allProfiles.Count(p => p.Gender?.ToUpper() == "FEMALE");
         public int FilteredCount => FilteredProfiles.Count;
 
-        public ICommand RefreshCommand      { get; }
-        public ICommand AddNewCommand       { get; }
-        public ICommand EditCommand         { get; }
-        public ICommand DeleteCommand       { get; }
-        public ICommand ViewPdfCommand      { get; }
-        public ICommand ClearSearchCommand  { get; }
-        public ICommand ImportExcelCommand  { get; }
-        public ICommand ExportCommand       { get; }
+        public ICommand RefreshCommand        { get; }
+        public ICommand AddNewCommand         { get; }
+        public ICommand EditCommand           { get; }
+        public ICommand DeleteCommand         { get; }
+        public ICommand ViewPdfCommand        { get; }
+        public ICommand ClearSearchCommand    { get; }
+        public ICommand ImportExcelCommand    { get; }
+        public ICommand ExportCommand         { get; }
+        public ICommand ExportExcelCommand    { get; }
 
         public List<string> GenderOptions { get; } = new() { "All", "MALE", "FEMALE" };
         public List<string> StatusOptions { get; } = new[] { "All" }
@@ -97,6 +99,7 @@ namespace MarriageBureau.ViewModels
             ImportExcelCommand = new RelayCommand(() => _mainVm.Navigate(AppPage.ExcelImport));
             ExportCommand      = new RelayCommand(() => _mainVm.Navigate(AppPage.Export, SelectedProfile),
                                                    () => SelectedProfile != null);
+            ExportExcelCommand = new RelayCommand(async () => await ExportExcelAsync());
         }
 
         public async Task LoadAsync()
@@ -126,6 +129,7 @@ namespace MarriageBureau.ViewModels
             {
                 var st = SearchText.ToLower();
                 q = q.Where(p =>
+                    (p.ProfileId?.ToLower().Contains(st) ?? false) ||
                     (p.Name?.ToLower().Contains(st) ?? false) ||
                     (p.Caste?.ToLower().Contains(st) ?? false) ||
                     (p.Qualification?.ToLower().Contains(st) ?? false) ||
@@ -192,6 +196,68 @@ namespace MarriageBureau.ViewModels
             GenderFilter = "All";
             CasteFilter  = string.Empty;
             StatusFilter = "All";
+        }
+
+        // ── Excel Export ─────────────────────────────────────────────────────
+
+        private async Task ExportExcelAsync()
+        {
+            // Use the currently filtered set (respects all active filters)
+            var profilesToExport = FilteredProfiles.ToList();
+            if (profilesToExport.Count == 0)
+            {
+                System.Windows.MessageBox.Show(
+                    "No profiles to export. Please adjust the filters and try again.",
+                    "Export Excel",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Information);
+                return;
+            }
+
+            var dlg = new Microsoft.Win32.SaveFileDialog
+            {
+                Title      = "Export Profiles to Excel",
+                Filter     = "Excel Workbook|*.xlsx",
+                FileName   = $"Profiles_Export_{DateTime.Now:yyyyMMdd_HHmm}",
+                DefaultExt = ".xlsx"
+            };
+
+            if (dlg.ShowDialog() != true) return;
+
+            IsLoading = true;
+            try
+            {
+                var outPath = dlg.FileName;
+                await Task.Run(() => ExcelExportService.Export(profilesToExport, outPath));
+
+                var result = System.Windows.MessageBox.Show(
+                    $"Exported {profilesToExport.Count} profile(s) to:\n{outPath}\n\nOpen the file now?",
+                    "Export Successful",
+                    System.Windows.MessageBoxButton.YesNo,
+                    System.Windows.MessageBoxImage.Information);
+
+                if (result == System.Windows.MessageBoxResult.Yes)
+                {
+                    try
+                    {
+                        System.Diagnostics.Process.Start(
+                            new System.Diagnostics.ProcessStartInfo(outPath) { UseShellExecute = true });
+                    }
+                    catch { /* ignore – user can open manually */ }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(
+                    $"Export failed:\n{ex.Message}",
+                    "Export Error",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
     }
 }

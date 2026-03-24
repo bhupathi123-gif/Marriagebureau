@@ -287,7 +287,7 @@ namespace MarriageBureau.ViewModels
                     "OCCUPATION /EDUCATION" or "OCCUPATION" or "OCCUPATION/EDUCATION" => "OCCUPATION",
                     "EXPECTATIONS FROM PARTNER" => "EXPECTATIONS",
                     "GRAND FATHER NAME" => "GRANDFATHER",
-                    "ELDER FATHER" => "ELDER FATHER",
+                    "UNCLE" => "UNCLE",
                     "NO.OF SIBLINGS" => "SIBLINGS",
                     "REFERENCE NAME" or "REFERENCES" => "REFERENCES",
                     "REFERENCE PNONE" or "REFERENCE PHONE" => "REF PHONE",
@@ -380,7 +380,7 @@ namespace MarriageBureau.ViewModels
                 SisterOccupation        = G("OCCUPATION"),  // same col reused
                 BrotherInLaw            = G("BROTHER IN LAW"),
                 GrandFatherName         = G("GRANDFATHER"),
-                ElderFather             = G("ELDER FATHER"),
+                ElderFather             = G("UNCLE"),
                 ElderFatherPhone        = G("PHONE"),
                 DoorNumber              = G("D.NO."),
                 AddressLine             = G("ADRESS"),
@@ -440,6 +440,9 @@ namespace MarriageBureau.ViewModels
                     try
                     {
                         using var ctx = new AppDbContext();
+                        // Assign ProfileId if not already set
+                        if (string.IsNullOrWhiteSpace(row.ParsedBiodata.ProfileId))
+                            row.ParsedBiodata.ProfileId = AppDbContext.GenerateNextProfileId(ctx);
                         ctx.Biodatas.Add(row.ParsedBiodata);
                         await ctx.SaveChangesAsync();
 
