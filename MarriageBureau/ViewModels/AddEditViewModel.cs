@@ -518,6 +518,9 @@ namespace MarriageBureau.ViewModels
                 else
                 {
                     Biodata.CreatedAt = DateTime.Now;
+                    // Auto-assign ProfileId if not already set
+                    if (string.IsNullOrWhiteSpace(Biodata.ProfileId))
+                        Biodata.ProfileId = AppDbContext.GenerateNextProfileId(ctx);
                     ctx.Biodatas.Add(Biodata);
                     await ctx.SaveChangesAsync(); // Get the new Id
                 }
@@ -558,6 +561,7 @@ namespace MarriageBureau.ViewModels
         private static Biodata CopyBiodata(Biodata src) => new()
         {
             Id                      = src.Id,
+            ProfileId               = src.ProfileId,
             Name                    = src.Name,
             Caste                   = src.Caste,
             Gender                  = src.Gender,

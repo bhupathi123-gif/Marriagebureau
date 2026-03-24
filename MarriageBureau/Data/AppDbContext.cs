@@ -3,6 +3,7 @@ using MarriageBureau.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Configuration;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace MarriageBureau.Data
 {
@@ -145,7 +146,10 @@ namespace MarriageBureau.Data
                     Id                     INTEGER PRIMARY KEY DEFAULT 1,
                     EncryptedBusinessName  TEXT,
                     SecurityCode           TEXT
-                )"
+                )",
+
+                // v5: ProfileId column on Biodatas
+                @"ALTER TABLE Biodatas ADD COLUMN ProfileId TEXT"
             };
 
             foreach (var sql in migrations)
@@ -153,6 +157,38 @@ namespace MarriageBureau.Data
                 try { ctx.Database.ExecuteSqlRaw(sql); }
                 catch { /* column / table already exists – skip */ }
             }
+        }
+
+        // ── ProfileId generation ─────────────────────────────────────────────
+
+        /// <summary>
+        /// Returns a new unique ProfileId string, e.g. "TS001", "TS002" …
+        /// The prefix comes from App.config key "ProfileIdPrefix" (default "MB").
+        /// The numeric part is the next sequential number across ALL existing profiles
+        /// that already have a ProfileId with the same prefix.
+        /// </summary>
+        public static string GenerateNextProfileId(AppDbContext ctx)
+        {
+            var prefix = (ConfigurationManager.AppSettings["ProfileIdPrefix"] ?? "MB").Trim().ToUpper();
+
+            // Find the highest existing numeric suffix for this prefix
+            var existing = ctx.Biodatas
+                .Where(b => b.ProfileId != null && b.ProfileId.StartsWith(prefix))
+                .Select(b => b.ProfileId!)
+                .ToList();
+
+            int maxNum = 0;
+            foreach (var pid in existing)
+            {
+                var numPart = pid.Substring(prefix.Length);
+                if (int.TryParse(numPart, out int n) && n > maxNum)
+                    maxNum = n;
+            }
+
+            // Zero-pad to at least 3 digits
+            int nextNum = maxNum + 1;
+            int padWidth = Math.Max(3, (maxNum + 1).ToString().Length);
+            return $"{prefix}{nextNum.ToString().PadLeft(padWidth, '0')}";
         }
 
         private static void SeedDefaultAdmin(AppDbContext ctx)

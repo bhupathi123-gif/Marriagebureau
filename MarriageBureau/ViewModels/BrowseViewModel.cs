@@ -129,6 +129,7 @@ namespace MarriageBureau.ViewModels
             {
                 var st = SearchText.ToLower();
                 q = q.Where(p =>
+                    (p.ProfileId?.ToLower().Contains(st) ?? false) ||
                     (p.Name?.ToLower().Contains(st) ?? false) ||
                     (p.Caste?.ToLower().Contains(st) ?? false) ||
                     (p.Qualification?.ToLower().Contains(st) ?? false) ||

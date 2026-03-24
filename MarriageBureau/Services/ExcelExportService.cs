@@ -11,9 +11,12 @@ namespace MarriageBureau.Services
     /// </summary>
     public static class ExcelExportService
     {
-        // Column headers in the exact order / names used by the importer
+        // Column headers in the exact order / names used by the importer.
+        // PROFILE ID is an extra column prepended before S.NO. so it is
+        // immediately visible and can be used as a lookup key.
         private static readonly (string Header, Func<Biodata, string?> Getter)[] Columns =
         {
+            ("PROFILE ID",            b => b.ProfileId),
             ("S.NO.",                 null!),   // filled in by loop
             ("NAME",                  b => b.Name),
             ("GENDER",                b => b.Gender),
@@ -119,12 +122,15 @@ namespace MarriageBureau.Services
 
                     if (header == "S.NO.")
                     {
-                        cell.Value = r + 1;
+                        cell.Value = r + 1;   // sequential number, 1-based
+                    }
+                    else if (getter != null)
+                    {
+                        cell.Value = getter.Invoke(biodata) ?? string.Empty;
                     }
                     else
                     {
-                        var value = getter?.Invoke(biodata) ?? string.Empty;
-                        cell.Value = value ?? string.Empty;
+                        cell.Value = string.Empty;
                     }
 
                     // Alternate row shading

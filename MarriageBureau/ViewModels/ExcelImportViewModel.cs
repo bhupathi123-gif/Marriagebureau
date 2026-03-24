@@ -440,6 +440,9 @@ namespace MarriageBureau.ViewModels
                     try
                     {
                         using var ctx = new AppDbContext();
+                        // Assign ProfileId if not already set
+                        if (string.IsNullOrWhiteSpace(row.ParsedBiodata.ProfileId))
+                            row.ParsedBiodata.ProfileId = AppDbContext.GenerateNextProfileId(ctx);
                         ctx.Biodatas.Add(row.ParsedBiodata);
                         await ctx.SaveChangesAsync();
 
