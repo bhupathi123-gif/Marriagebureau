@@ -53,6 +53,8 @@ namespace MarriageBureau.Data
             modelBuilder.Entity<Biodata>(entity =>
             {
                 entity.HasKey(e => e.Id);
+                entity.Property(e => e.IntId).IsRequired().HasDefaultValue(string.Empty);
+                entity.HasIndex(e => e.IntId).IsUnique();
                 entity.Property(e => e.Name).IsRequired();
                 entity.Property(e => e.Gender).IsRequired().HasDefaultValue("Male");
                 entity.Property(e => e.Status).HasDefaultValue(ProfileStatus.Active);
@@ -149,7 +151,13 @@ namespace MarriageBureau.Data
                 )",
 
                 // v5: ProfileId column on Biodatas
-                @"ALTER TABLE Biodatas ADD COLUMN ProfileId TEXT"
+                @"ALTER TABLE Biodatas ADD COLUMN ProfileId TEXT",
+
+                // v6: IntId column on Biodatas (unique, user-supplied matrimony internal ID)
+                @"ALTER TABLE Biodatas ADD COLUMN IntId TEXT NOT NULL DEFAULT ''",
+
+                // v6b: unique index on IntId (non-empty rows only enforced in app logic)
+                @"CREATE UNIQUE INDEX IF NOT EXISTS IX_Biodatas_IntId ON Biodatas(IntId) WHERE IntId != ''"
             };
 
             foreach (var sql in migrations)

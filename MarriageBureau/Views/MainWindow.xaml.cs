@@ -73,5 +73,12 @@ namespace MarriageBureau.Views
             var view = new SettingsView(_vm, CurrentUser);
             MainFrame.Content = view;
         }
+
+        public void LoadPhotoImport()
+        {
+            var vm   = new PhotoImportViewModel(_vm);
+            var view = new PhotoImportView(vm);
+            MainFrame.Content = view;
+        }
     }
 }

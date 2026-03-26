@@ -493,11 +493,30 @@ namespace MarriageBureau.ViewModels
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(Biodata.IntId))
+            {
+                StatusMessage = "Internal ID (IntId) is required.";
+                return;
+            }
+
             IsSaving = true;
             StatusMessage = "Saving…";
             try
             {
                 using var ctx = new AppDbContext();
+
+                // Check IntId uniqueness
+                var intIdTrimmed = Biodata.IntId.Trim();
+                bool intIdDuplicate = ctx.Biodatas.Any(b =>
+                    b.IntId == intIdTrimmed && b.Id != Biodata.Id);
+                if (intIdDuplicate)
+                {
+                    StatusMessage = $"Internal ID '{intIdTrimmed}' already exists. Please use a unique IntId.";
+                    IsSaving = false;
+                    return;
+                }
+                Biodata.IntId = intIdTrimmed;
+
                 Biodata.UpdatedAt = DateTime.Now;
 
                 // Set cover photo path for backward compat
@@ -561,6 +580,7 @@ namespace MarriageBureau.ViewModels
         private static Biodata CopyBiodata(Biodata src) => new()
         {
             Id                      = src.Id,
+            IntId                   = src.IntId,
             ProfileId               = src.ProfileId,
             Name                    = src.Name,
             Caste                   = src.Caste,

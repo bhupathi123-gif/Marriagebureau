@@ -16,8 +16,10 @@ namespace MarriageBureau.Services
         // immediately visible and can be used as a lookup key.
         private static readonly (string Header, Func<Biodata, string?> Getter)[] Columns =
         {
-            ("TMID",            b => b.ProfileId),
-            ("S.NO.",                 null!),   // filled in by loop
+            ("S.NO.",                 null!),   // filled in by loop — this is the IntId in export (maps on import)
+            ("INT ID",                b => b.IntId),
+            ("PROFILE ID",            b => b.ProfileId),
+            ("STATUS",                b => b.Status.ToString()),
             ("NAME",                  b => b.Name),
             ("GENDER",                b => b.Gender),
             ("CASTE",                 b => b.Caste),

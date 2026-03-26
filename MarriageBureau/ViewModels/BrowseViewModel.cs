@@ -78,6 +78,7 @@ namespace MarriageBureau.ViewModels
         public ICommand ViewPdfCommand        { get; }
         public ICommand ClearSearchCommand    { get; }
         public ICommand ImportExcelCommand    { get; }
+        public ICommand ImportPhotosCommand   { get; }
         public ICommand ExportCommand         { get; }
         public ICommand ExportExcelCommand    { get; }
 
@@ -95,10 +96,11 @@ namespace MarriageBureau.ViewModels
             DeleteCommand    = new RelayCommand(async () => await DeleteSelectedAsync(),
                                                  () => SelectedProfile != null);
             ViewPdfCommand     = new RelayCommand(OpenPdf, () => SelectedProfile?.HasPdf == true);
-            ClearSearchCommand = new RelayCommand(ClearSearch);
-            ImportExcelCommand = new RelayCommand(() => _mainVm.Navigate(AppPage.ExcelImport));
-            ExportCommand      = new RelayCommand(() => _mainVm.Navigate(AppPage.Export, SelectedProfile),
-                                                   () => SelectedProfile != null);
+            ClearSearchCommand  = new RelayCommand(ClearSearch);
+            ImportExcelCommand  = new RelayCommand(() => _mainVm.Navigate(AppPage.ExcelImport));
+            ImportPhotosCommand = new RelayCommand(() => _mainVm.Navigate(AppPage.PhotoImport));
+            ExportCommand       = new RelayCommand(() => _mainVm.Navigate(AppPage.Export, SelectedProfile),
+                                                    () => SelectedProfile != null);
             ExportExcelCommand = new RelayCommand(async () => await ExportExcelAsync());
         }
 
@@ -129,6 +131,7 @@ namespace MarriageBureau.ViewModels
             {
                 var st = SearchText.ToLower();
                 q = q.Where(p =>
+                    (p.IntId?.ToLower().Contains(st) ?? false) ||
                     (p.ProfileId?.ToLower().Contains(st) ?? false) ||
                     (p.Name?.ToLower().Contains(st) ?? false) ||
                     (p.Caste?.ToLower().Contains(st) ?? false) ||
