@@ -6,7 +6,6 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>MarriageBureau</AssemblyName>
     <RootNamespace>MarriageBureau</RootNamespace>
     <Platforms>x64;AnyCPU</Platforms>
@@ -31,6 +30,13 @@
     <PackageReference Include="itext7" Version="8.0.4" />
     <!-- Image encoding: save rendered WPF visual as PNG/JPEG -->
     <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
+  </ItemGroup>
+
+  <!-- System.Windows.Forms — needed only for FolderBrowserDialog in PhotoImportViewModel.
+       Referenced directly (not via UseWindowsForms=true) to avoid the
+       'Application is ambiguous' conflict with System.Windows.Application. -->
+  <ItemGroup>
+    <Reference Include="System.Windows.Forms" />
   </ItemGroup>
 
   <!-- Embedded Resources -->
