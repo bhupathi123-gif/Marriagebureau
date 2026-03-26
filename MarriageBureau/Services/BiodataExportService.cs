@@ -194,7 +194,7 @@ namespace MarriageBureau.Services
         {
             // Count non-empty fields to decide layout
             int totalFields  = sections.Sum(s => s.Fields.Count(f => !string.IsNullOrWhiteSpace(f.Value)));
-            bool useTwoCol   = totalFields > 22;
+            bool useTwoCol   = totalFields > 17;
 
             root.Column(col =>
             {
@@ -310,7 +310,7 @@ namespace MarriageBureau.Services
         private static void RenderTwoColumns(ColumnDescriptor col, List<Section> sections)
         {
             int totalFields = sections.Sum(s => s.Fields.Count(f => !string.IsNullOrWhiteSpace(f.Value)));
-            int half        = (totalFields + 1) / 2;
+            int half        = ((totalFields + 1) / 2) + 2;
 
             var leftSections  = new List<Section>();
             var rightSections = new List<Section>();
@@ -358,14 +358,14 @@ namespace MarriageBureau.Services
                    .PaddingVertical(3)
                    .AlignCenter()
                    .Text(section.Title)
-                   .FontSize(14)
+                   .FontSize(12)
                    .Bold()
                    .FontColor(QuestPDF.Helpers.Colors.White);
 
                 col.Item().PaddingTop(2);
 
                 foreach (var f in fields)
-                    RenderFieldRow(col, f.Label, f.Value, labelWidth, fontSize: 14);
+                    RenderFieldRow(col, f.Label, f.Value, labelWidth, fontSize: 12);
             }
         }
 

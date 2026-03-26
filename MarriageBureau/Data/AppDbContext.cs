@@ -187,8 +187,9 @@ namespace MarriageBureau.Data
 
             // Zero-pad to at least 3 digits
             int nextNum = maxNum + 1;
-            int padWidth = Math.Max(3, (maxNum + 1).ToString().Length);
-            return $"{prefix}{nextNum.ToString().PadLeft(padWidth, '0')}";
+          //  int padWidth = Math.Max(3, (maxNum + 1).ToString().Length);
+            return $"{prefix}{nextNum.ToString()}";
+             //   $"             //  $"//.PadLeft(padWidth, '0')}";
         }
 
         private static void SeedDefaultAdmin(AppDbContext ctx)

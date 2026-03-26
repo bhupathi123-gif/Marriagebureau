@@ -140,7 +140,7 @@ namespace MarriageBureau.Services
                     $"Licence expired on {expiry:dd-MMM-yyyy}. Please contact the administrator to renew.");
 
             var daysLeft = (expiry - DateTime.Today).Days;
-            var msg = daysLeft <= 10
+            var msg = daysLeft <=2
                 ? $"Licence expires in {daysLeft} day(s) on {expiry:dd-MMM-yyyy}."
                 : ""; //$"Licence valid until {expiry:dd-MMM-yyyy}.";
 
