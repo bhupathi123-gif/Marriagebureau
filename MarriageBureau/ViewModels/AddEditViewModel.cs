@@ -515,6 +515,8 @@ namespace MarriageBureau.ViewModels
                     IsSaving = false;
                     return;
                 }
+
+
                 Biodata.IntId = intIdTrimmed;
 
                 Biodata.UpdatedAt = DateTime.Now;

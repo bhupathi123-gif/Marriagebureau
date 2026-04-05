@@ -282,13 +282,13 @@ namespace MarriageBureau.Services
             // ProfileId - IntId row
             var idParts = new List<string>();
             if (!string.IsNullOrWhiteSpace(p.ProfileId)) idParts.Add($"ProfileId: {p.ProfileId}");
-            if (!string.IsNullOrWhiteSpace(p.IntId))     idParts.Add($"IntId: {p.IntId}");
+            if (!string.IsNullOrWhiteSpace(p.IntId))     idParts.Add($"{p.IntId}");
 
             if (idParts.Count > 0)
             {
                 col.Item()
                    .AlignCenter()
-                   .Text(string.Join("  |  ", idParts))
+                   .Text(string.Join("  -  ", idParts))
                    .FontSize(IdFontSize)
                    .FontColor(AccentColor);
             }

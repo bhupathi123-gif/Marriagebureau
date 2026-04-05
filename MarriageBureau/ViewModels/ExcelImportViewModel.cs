@@ -233,9 +233,10 @@ namespace MarriageBureau.ViewModels
                             errors.Add("IntId (S.NO.) is empty");
 
                         // ── DOB – multiple formats ────────────────────────
-                        string rawDob = Clean(GetCell(ws, row, colMap, "D.O.B"));
-                        string parsedDob = NormalizeDob(rawDob, ws, row, colMap);
+                        //string rawDob = Clean(GetCell(ws, row, colMap, "D.O.B"));
+                        //string parsedDob = NormalizeDob(rawDob, ws, row, colMap);
 
+                        string parsedDob = ReadDob(ws,row,colMap);
                         // ── Duplicate IntId within file ───────────────────
                         if (!string.IsNullOrWhiteSpace(intId))
                         {
@@ -337,6 +338,7 @@ namespace MarriageBureau.ViewModels
             // Try known formats
             string[] formats =
             {
+                "dd MMMM yyyy",
                 "dd-MMMM-yyyy",   // 01-March-2001
                 "dd-MMM-yyyy",    // 01-Mar-2001
                 "dd-MM-yyyy",     // 01-03-2001
@@ -356,6 +358,34 @@ namespace MarriageBureau.ViewModels
                 return dt2.ToString("dd-MMM-yyyy");
 
             return raw; // return as-is if cannot parse
+        }
+
+
+        private static string ReadDob(IXLWorksheet ws, int row, Dictionary<string, int> colMap)
+        {
+            if (!colMap.TryGetValue("D.O.B", out var col)) return "";
+
+            var cell = ws.Cell(row, col);
+            if (cell.IsEmpty()) return "";
+
+            // Best case: ClosedXML can give DateTime directly
+            if (cell.TryGetValue<DateTime>(out var dt))
+                return dt.ToString("dd-MMM-yyyy", CultureInfo.InvariantCulture);
+
+            // If Excel stores as serial number
+            if (cell.TryGetValue<double>(out var oa) && oa > 1 && oa < 60000)
+            {
+                try
+                {
+                    var dt2 = DateTime.FromOADate(oa);
+                    return dt2.ToString("dd-MMM-yyyy", CultureInfo.InvariantCulture);
+                }
+                catch { }
+            }
+
+            // Fallback: use formatted text (what you see in Excel)
+            var s = (cell.GetFormattedString() ?? "").Trim();
+            return NormalizeDob(s);
         }
 
         // ── Header row finder ────────────────────────────────────────────
@@ -629,15 +659,15 @@ namespace MarriageBureau.ViewModels
                 StatusMessage = $"Done! Imported: {ImportedCount}  |  Skipped: {SkippedCount}  |  Errors: {ErrorCount}";
 
                 // Show details of failed rows
-                if (SkippedCount + ErrorCount > 0)
-                {
-                    var failedRows = PreviewRows
-                        .Where(r => r.Status != "Imported" && r.Status != "Pending")
-                        .Select(r => $"Row {r.RowNum} [{r.IntId}] {r.Name}: {r.ErrorMessage}")
-                        .ToList();
+                //if (SkippedCount + ErrorCount > 0)
+                //{
+                //    var failedRows = PreviewRows
+                //        .Where(r => r.Status != "Imported" && r.Status != "Pending")
+                //        .Select(r => $"Row {r.RowNum} [{r.IntId}] {r.Name}: {r.ErrorMessage}")
+                //        .ToList();
 
-                    StatusMessage += $"\n\nNot imported records:\n" + string.Join("\n", failedRows);
-                }
+                //    StatusMessage += $"\n\nNot imported records:\n" + string.Join("\n", failedRows);
+                //}
 
                 OnPropertyChanged(nameof(PreviewRows));
                 CommandManager.InvalidateRequerySuggested();

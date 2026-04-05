@@ -4,6 +4,7 @@ using System.Windows.Input;
 using MarriageBureau.Data;
 using MarriageBureau.Models;
 using Microsoft.EntityFrameworkCore;
+using WinForms = System.Windows.Forms;
 
 namespace MarriageBureau.ViewModels
 {
@@ -142,24 +143,42 @@ namespace MarriageBureau.ViewModels
 
         // ── Browse Folder ────────────────────────────────────────────────────
 
+        //private void BrowseFolder()
+        //{
+        //    // WPF doesn't have a built-in folder dialog – use OpenFileDialog trick or
+        //    //// System.Windows.Forms.FolderBrowserDialog via interop.
+        //    //using var dlg = new WinForms.FolderBrowserDialog
+        //    //{
+        //    //    Description         = "Select the root folder containing profile photos",
+        //    //    ShowNewFolderButton = false
+        //    //};
+
+        //    //if (dlg.ShowDialog() == WinForms.DialogResult.OK)
+        //    //{
+        //    //    SourcePath = dlg.SelectedPath;
+        //    //    Rows.Clear();
+        //    //    StatusMessage = $"Folder selected: {SourcePath}";
+        //    //    ImportedCount = SkippedCount = ErrorCount = 0;
+        //    //}
+        //}
+
         private void BrowseFolder()
         {
-            // WPF doesn't have a built-in folder dialog – use OpenFileDialog trick or
-            // System.Windows.Forms.FolderBrowserDialog via interop.
-            using var dlg = new System.Windows.Forms.FolderBrowserDialog
+            var dlg = new Microsoft.Win32.OpenFolderDialog
             {
-                Description         = "Select the root folder containing profile photos",
-                ShowNewFolderButton = false
+                Title = "Select the root folder containing profile photos",
+                Multiselect = false
             };
 
-            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            if (dlg.ShowDialog() == true)
             {
-                SourcePath = dlg.SelectedPath;
+                SourcePath = dlg.FolderName;   // <- note: FolderName (not SelectedPath)
                 Rows.Clear();
                 StatusMessage = $"Folder selected: {SourcePath}";
                 ImportedCount = SkippedCount = ErrorCount = 0;
             }
         }
+
 
         // ── Scan ─────────────────────────────────────────────────────────────
 

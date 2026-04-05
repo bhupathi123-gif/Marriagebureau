@@ -54,7 +54,7 @@
                         <TextBlock Text="Import Excel"/>
                     </StackPanel>
                 </Button>
-                <Button Command="{Binding ImportPhotosCommand}"
+                <!--<Button Command="{Binding ImportPhotosCommand}"
                         Style="{StaticResource MaterialDesignOutlinedButton}"
                         Margin="0,0,8,0" ToolTip="Bulk-import photos for existing profiles (by IntId)"
                         Foreground="#1A237E" BorderBrush="#1A237E">
@@ -62,7 +62,7 @@
                         <materialDesign:PackIcon Kind="ImageMultiple" Margin="0,0,8,0"/>
                         <TextBlock Text="Import Photos"/>
                     </StackPanel>
-                </Button>
+                </Button>-->
                 <Button Command="{Binding ExportExcelCommand}"
                         Style="{StaticResource MaterialDesignOutlinedButton}"
                         Margin="0,0,8,0"
