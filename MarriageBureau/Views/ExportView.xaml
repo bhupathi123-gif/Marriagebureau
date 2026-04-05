@@ -126,6 +126,11 @@
                                             <Run Text=" • "/>
                                            <Run Text="{Binding AgeDisplay, Mode=OneWay}"/>
                                         </TextBlock>
+                                        <TextBlock FontSize="10" Foreground="Gray">
+                                            <Run Text="{Binding ProfileId}"/>
+                                            <Run Text=" -- "/>
+                                           <Run Text="{Binding IntId, Mode=OneWay}"/>
+                                                  </TextBlock>                
                                     </StackPanel>
                                 </Grid>
                             </DataTemplate>

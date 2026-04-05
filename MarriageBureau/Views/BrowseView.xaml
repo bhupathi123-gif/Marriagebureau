@@ -54,6 +54,15 @@
                         <TextBlock Text="Import Excel"/>
                     </StackPanel>
                 </Button>
+                <!--<Button Command="{Binding ImportPhotosCommand}"
+                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                        Margin="0,0,8,0" ToolTip="Bulk-import photos for existing profiles (by IntId)"
+                        Foreground="#1A237E" BorderBrush="#1A237E">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="ImageMultiple" Margin="0,0,8,0"/>
+                        <TextBlock Text="Import Photos"/>
+                    </StackPanel>
+                </Button>-->
                 <Button Command="{Binding ExportExcelCommand}"
                         Style="{StaticResource MaterialDesignOutlinedButton}"
                         Margin="0,0,8,0"
@@ -90,7 +99,7 @@
 
                 <TextBox Grid.Column="0"
                          Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                         materialDesign:HintAssist.Hint="🔍  Search by profile ID, name, phone, caste, district..."
+                         materialDesign:HintAssist.Hint="🔍  Search by IntId, profile ID, name, phone, caste, district..."
                          Style="{StaticResource MaterialDesignOutlinedTextBox}"
                          Margin="0,0,8,0"/>
 
@@ -156,8 +165,8 @@
                     </DataGrid.RowStyle>
 
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="#"          Binding="{Binding Id}"        Width="50"/>
-                        <DataGridTextColumn Header="TMID" Binding="{Binding ProfileId}" Width="80"/>
+                        <DataGridTextColumn Header="IntId"      Binding="{Binding IntId}"     Width="70"/>
+                        <DataGridTextColumn Header="ProfileId"  Binding="{Binding ProfileId}" Width="80"/>
 
                         <!-- Photo column -->
                         <DataGridTemplateColumn Header="Photo" Width="54">

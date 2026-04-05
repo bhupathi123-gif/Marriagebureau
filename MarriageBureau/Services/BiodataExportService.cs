@@ -57,6 +57,24 @@ namespace MarriageBureau.Services
         private record FieldEntry(string Label, string Value);
         private record Section(string Title, List<FieldEntry> Fields);
 
+        // ── Config helpers ───────────────────────────────────────────────────
+        private static int Cfg(string key, int fallback)
+        {
+            var raw = ConfigurationManager.AppSettings[key];
+            return int.TryParse(raw, out int v) ? v : fallback;
+        }
+
+        // Font sizes (loaded fresh each export so changes to App.config are picked up)
+        private static int NameFontSize           => Cfg("Export.NameFontSize", 24);
+        private static int IdFontSize             => Cfg("Export.IdFontSize", 11);
+        private static int SectionHeading1Col     => Cfg("Export.SectionHeadingFontSize_1Col", 14);
+        private static int FieldFont1Col          => Cfg("Export.FieldFontSize_1Col", 14);
+        private static int SectionHeading2Col     => Cfg("Export.SectionHeadingFontSize_2Col", 12);
+        private static int FieldFont2Col          => Cfg("Export.FieldFontSize_2Col", 12);
+        private static int TwoColThreshold        => Cfg("Export.TwoColThreshold", 17);
+        private static int LabelWidth1Col         => Cfg("Export.LabelWidth_1Col", 120);
+        private static int LabelWidth2Col         => Cfg("Export.LabelWidth_2Col", 95);
+
         // ── Static ctor ──────────────────────────────────────────────────────
         static BiodataExportService()
         {
@@ -192,9 +210,9 @@ namespace MarriageBureau.Services
 
         private static void ComposeBiodataContent(IContainer root, Biodata p, List<Section> sections)
         {
-            // Count non-empty fields to decide layout
+            // Count non-empty fields to decide layout (threshold from config)
             int totalFields  = sections.Sum(s => s.Fields.Count(f => !string.IsNullOrWhiteSpace(f.Value)));
-            bool useTwoCol   = totalFields > 17;
+            bool useTwoCol   = totalFields > TwoColThreshold;
 
             root.Column(col =>
             {
@@ -257,17 +275,21 @@ namespace MarriageBureau.Services
                .PaddingTop(10)
                .AlignCenter()
                .Text(p.Name.ToUpper())
-               .FontSize(24)
+               .FontSize(NameFontSize)
                .FontColor(AccentColor)
                .Bold();
 
-            // ProfileId row (only if set)
-            if (!string.IsNullOrWhiteSpace(p.ProfileId))
+            // ProfileId - IntId row
+            var idParts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(p.ProfileId)) idParts.Add($"ProfileId: {p.ProfileId}");
+            if (!string.IsNullOrWhiteSpace(p.IntId))     idParts.Add($"{p.IntId}");
+
+            if (idParts.Count > 0)
             {
                 col.Item()
                    .AlignCenter()
-                   .Text($"TMID: {p.ProfileId}")
-                   .FontSize(11)
+                   .Text(string.Join("  -  ", idParts))
+                   .FontSize(IdFontSize)
                    .FontColor(AccentColor);
             }
         }
@@ -292,14 +314,14 @@ namespace MarriageBureau.Services
                    .PaddingVertical(3)
                    .AlignCenter()
                    .Text(section.Title)
-                   .FontSize(14)
+                   .FontSize(SectionHeading1Col)
                    .Bold()
                    .FontColor(QuestPDF.Helpers.Colors.White);
 
                 col.Item().PaddingTop(3);
 
                 foreach (var f in fields)
-                    RenderFieldRow(col, f.Label, f.Value, 120, 14);
+                    RenderFieldRow(col, f.Label, f.Value, LabelWidth1Col, FieldFont1Col);
             }
         }
 
@@ -336,9 +358,9 @@ namespace MarriageBureau.Services
 
             col.Item().Row(row =>
             {
-                row.RelativeItem().Column(c => RenderColumnSections(c, leftSections,  labelWidth: 95));
+                row.RelativeItem().Column(c => RenderColumnSections(c, leftSections,  labelWidth: LabelWidth2Col));
                 row.ConstantItem(14);
-                row.RelativeItem().Column(c => RenderColumnSections(c, rightSections, labelWidth: 95));
+                row.RelativeItem().Column(c => RenderColumnSections(c, rightSections, labelWidth: LabelWidth2Col));
             });
         }
 
@@ -358,14 +380,14 @@ namespace MarriageBureau.Services
                    .PaddingVertical(3)
                    .AlignCenter()
                    .Text(section.Title)
-                   .FontSize(12)
+                   .FontSize(SectionHeading2Col)
                    .Bold()
                    .FontColor(QuestPDF.Helpers.Colors.White);
 
                 col.Item().PaddingTop(2);
 
                 foreach (var f in fields)
-                    RenderFieldRow(col, f.Label, f.Value, labelWidth, fontSize: 12);
+                    RenderFieldRow(col, f.Label, f.Value, labelWidth, fontSize: FieldFont2Col);
             }
         }
 

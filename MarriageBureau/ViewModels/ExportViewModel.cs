@@ -164,6 +164,7 @@ namespace MarriageBureau.ViewModels
                     (p.Name?.ToLower().Contains(st) ?? false) ||
                     (p.Caste?.ToLower().Contains(st) ?? false) ||
                      (p.ProfileId?.ToLower().Contains(st) ?? false) ||
+                     (p.IntId?.ToLower().Contains(st) ?? false) ||
                     (p.District?.ToLower().Contains(st) ?? false));
             }
 

@@ -124,22 +124,29 @@
                         </StackPanel>
                     </Grid>
 
-                    <!-- Status -->
+                    <!-- Status + IntId -->
                     <Grid Margin="0,12,0,0">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="160"/>
+                            <ColumnDefinition Width="180"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="Internal ID (IntId) *" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.IntId, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="e.g. F1, M101"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     ToolTip="Matrimony Internal ID — unique reference like F1, F2, M1, M2. Mandatory."/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
                             <TextBlock Text="Profile Status" Style="{StaticResource FormLabel}"/>
                             <ComboBox ItemsSource="{Binding StatusOptions}"
                                       SelectedItem="{Binding Biodata.Status}"
                                       Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
                         </StackPanel>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Bottom" Margin="0,0,0,4">
+                        <StackPanel Grid.Column="2" VerticalAlignment="Bottom" Margin="0,0,0,4">
                             <TextBlock FontSize="11" Foreground="Gray" TextWrapping="Wrap">
-                                Set the current status of the profile.
-                                Active = visible in slideshow; Married/Closed = archived.
+                                IntId = unique internal reference (F1, M101 etc).  Status: Active = slideshow visible; Married/Closed = archived.
                             </TextBlock>
                         </StackPanel>
                     </Grid>

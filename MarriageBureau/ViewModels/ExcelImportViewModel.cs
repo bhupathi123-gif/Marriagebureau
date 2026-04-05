@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.IO;
 using System.Windows.Input;
 using ClosedXML.Excel;
@@ -14,6 +15,7 @@ namespace MarriageBureau.ViewModels
     public class ImportPreviewRow
     {
         public int RowNum { get; set; }
+        public string IntId { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string Gender { get; set; } = string.Empty;
         public string Caste { get; set; } = string.Empty;
@@ -113,6 +115,7 @@ namespace MarriageBureau.ViewModels
         public ICommand ImportCommand { get; }
         public ICommand CancelCommand { get; }
         public ICommand ClearCommand { get; }
+        public ICommand ExportErrorsCommand { get; }
 
         // ── Constructor ─────────────────────────────────────────────────
 
@@ -120,12 +123,14 @@ namespace MarriageBureau.ViewModels
         {
             _mainVm = mainVm;
 
-            BrowseFileCommand  = new RelayCommand(BrowseFile);
+            BrowseFileCommand   = new RelayCommand(BrowseFile);
             ParsePreviewCommand = new RelayCommand(async () => await ParsePreviewAsync(), () => FileSelected && !IsLoading);
-            ImportCommand      = new RelayCommand(async () => await ImportAsync(),
-                                                   () => PreviewRows.Count > 0 && !IsImporting && !IsLoading);
-            CancelCommand      = new RelayCommand(() => _mainVm.Navigate(AppPage.Browse));
-            ClearCommand       = new RelayCommand(Clear);
+            ImportCommand       = new RelayCommand(async () => await ImportAsync(),
+                                                    () => PreviewRows.Count > 0 && !IsImporting && !IsLoading);
+            CancelCommand       = new RelayCommand(() => _mainVm.Navigate(AppPage.Browse));
+            ClearCommand        = new RelayCommand(Clear);
+            ExportErrorsCommand = new RelayCommand(async () => await ExportErrorsAsync(),
+                                                    () => PreviewRows.Any(r => r.Status == "Error" || r.Status.StartsWith("Skipped")));
         }
 
         // ── File Browse ─────────────────────────────────────────────────
@@ -164,7 +169,11 @@ namespace MarriageBureau.ViewModels
                     PreviewRows.Add(r);
 
                 OnPropertyChanged(nameof(TotalRows));
-                StatusMessage = $"Found {PreviewRows.Count} records across all sheets. Review and click Import.";
+
+                int errCount = rows.Count(r => r.Status == "Error");
+                StatusMessage = $"Found {PreviewRows.Count} records. " +
+                                (errCount > 0 ? $"{errCount} rows have errors. " : "") +
+                                "Review and click Import.";
             }
             catch (Exception ex)
             {
@@ -178,27 +187,25 @@ namespace MarriageBureau.ViewModels
 
         // ── Core Parsing Logic ──────────────────────────────────────────
 
-        /// <summary>
-        /// Parses both MALE and FEMALE sheets from the Excel workbook.
-        /// Column mapping is based on the actual Excel format provided.
-        /// </summary>
         private static List<ImportPreviewRow> ParseExcelFile(string path)
         {
             var results = new List<ImportPreviewRow>();
             int rowNum = 1;
 
+            // Track within-file duplicates (intId, fullName+fatherName+gender, phone)
+            var seenIntIds    = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var seenIdentKeys = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var seenPhones    = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
             using var wb = new XLWorkbook(path);
 
             foreach (var ws in wb.Worksheets)
             {
-                // Detect header row (first row with S.NO. or NAME in col A/B)
                 int headerRow = FindHeaderRow(ws);
                 if (headerRow < 0) continue;
 
-                // Build column index map from headers
                 var colMap = BuildColumnMap(ws, headerRow);
 
-                // Infer gender from sheet name if not in data
                 string sheetGender = ws.Name.ToUpper().Contains("FEMALE") ? "FEMALE"
                                    : ws.Name.ToUpper().Contains("MALE")   ? "MALE"
                                    : string.Empty;
@@ -208,29 +215,84 @@ namespace MarriageBureau.ViewModels
                 {
                     var nameCell = GetCell(ws, row, colMap, "NAME");
                     if (string.IsNullOrWhiteSpace(nameCell)) continue;
-                    if (nameCell.Equals("NAME", StringComparison.OrdinalIgnoreCase)) continue; // duplicate header
+                    if (nameCell.Equals("NAME", StringComparison.OrdinalIgnoreCase)) continue;
+
+                    var errors = new List<string>();
 
                     try
                     {
+                        // ── IntId from S.NO. column ──────────────────────
+                        string intId = Clean(GetCell(ws, row, colMap, "S.NO."));
+                        // Also accept INT ID / INTID as direct column
+                        if (string.IsNullOrWhiteSpace(intId))
+                            intId = Clean(GetCell(ws, row, colMap, "INTID"));
+                        if (string.IsNullOrWhiteSpace(intId))
+                            intId = Clean(GetCell(ws, row, colMap, "INT ID"));
+
+                        if (string.IsNullOrWhiteSpace(intId))
+                            errors.Add("IntId (S.NO.) is empty");
+
+                        // ── DOB – multiple formats ────────────────────────
+                        //string rawDob = Clean(GetCell(ws, row, colMap, "D.O.B"));
+                        //string parsedDob = NormalizeDob(rawDob, ws, row, colMap);
+
+                        string parsedDob = ReadDob(ws,row,colMap);
+                        // ── Duplicate IntId within file ───────────────────
+                        if (!string.IsNullOrWhiteSpace(intId))
+                        {
+                            if (seenIntIds.TryGetValue(intId, out int prevRow))
+                                errors.Add($"Duplicate IntId '{intId}' (also row {prevRow})");
+                            else
+                                seenIntIds[intId] = rowNum;
+                        }
+
+                        // ── Duplicate Name+FatherName+Gender within file ──
+                        string fatherName = Clean(GetCell(ws, row, colMap, "FATHER NAME"));
+                        string gender = Clean(GetCell(ws, row, colMap, "GENDER") ?? sheetGender);
+                        string identKey = $"{nameCell.ToLower()}|{fatherName.ToLower()}|{gender.ToLower()}";
+                        if (seenIdentKeys.TryGetValue(identKey, out int prevIdentRow))
+                            errors.Add($"Duplicate Name+FatherName+Gender (also row {prevIdentRow})");
+                        else
+                            seenIdentKeys[identKey] = rowNum;
+
+                        // ── Duplicate Phone within file ───────────────────
+                        string phone = Clean(GetCell(ws, row, colMap, "PHONE1"));
+                        if (!string.IsNullOrWhiteSpace(phone))
+                        {
+                            if (seenPhones.TryGetValue(phone, out int prevPhoneRow))
+                                errors.Add($"Duplicate Phone '{phone}' (also row {prevPhoneRow})");
+                            else
+                                seenPhones[phone] = rowNum;
+                        }
+
                         var preview = new ImportPreviewRow
                         {
                             RowNum      = rowNum++,
+                            IntId       = intId,
                             Name        = Clean(nameCell),
                             Gender      = Clean(GetCell(ws, row, colMap, "GENDER") ?? sheetGender),
                             Caste       = Clean(GetCell(ws, row, colMap, "CASTE")),
-                            DateOfBirth = Clean(GetCell(ws, row, colMap, "D.O.B")),
+                            DateOfBirth = parsedDob,
                             Height      = Clean(GetCell(ws, row, colMap, "HEIGHT")),
                             Qualification = Clean(GetCell(ws, row, colMap, "QUALIFICATION")),
                             Designation = Clean(GetCell(ws, row, colMap, "DESIGNATION")),
                             District    = Clean(GetCell(ws, row, colMap, "DISTRICT")),
-                            Phone1      = Clean(GetCell(ws, row, colMap, "PHONE1")),
+                            Phone1      = phone,
                             BirthStar   = Clean(GetCell(ws, row, colMap, "BIRTH STAR")),
                             Raasi       = Clean(GetCell(ws, row, colMap, "RAASI")),
                         };
 
-                        // Build full Biodata record
-                        preview.ParsedBiodata = BuildBiodata(ws, row, colMap, sheetGender);
-                        preview.Status = "Pending";
+                        if (errors.Count > 0)
+                        {
+                            preview.Status       = "Error";
+                            preview.ErrorMessage = string.Join("; ", errors);
+                        }
+                        else
+                        {
+                            preview.ParsedBiodata = BuildBiodata(ws, row, colMap, sheetGender, intId, parsedDob);
+                            preview.Status = "Pending";
+                        }
+
                         results.Add(preview);
                     }
                     catch (Exception ex)
@@ -249,6 +311,85 @@ namespace MarriageBureau.ViewModels
             return results;
         }
 
+        // ── DOB normalisation ────────────────────────────────────────────
+        // Accepts: 01 March 2001, 01-Mar-2001, 01-03-2001, 01/Mar/2001, 01/03/2001
+        private static string NormalizeDob(string raw, IXLWorksheet? ws = null,
+                                            int row = 0, Dictionary<string, int>? colMap = null)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                // Try reading as Excel DateTime cell
+                if (ws != null && colMap != null && colMap.TryGetValue("D.O.B", out int dc))
+                {
+                    var cell = ws.Cell(row, dc);
+                    if (!cell.IsEmpty() && cell.DataType == XLDataType.DateTime)
+                    {
+                        try { return cell.GetDateTime().ToString("dd-MMM-yyyy"); } catch { }
+                    }
+                }
+                return raw;
+            }
+
+            // Normalize separators: '/', ' ', '-'  →  '-'
+            var normalized = raw.Trim()
+                                .Replace("/", "-")
+                                .Replace(" ", "-");
+
+            // Try known formats
+            string[] formats =
+            {
+                "dd MMMM yyyy",
+                "dd-MMMM-yyyy",   // 01-March-2001
+                "dd-MMM-yyyy",    // 01-Mar-2001
+                "dd-MM-yyyy",     // 01-03-2001
+                "d-MMMM-yyyy",
+                "d-MMM-yyyy",
+                "d-MM-yyyy",
+                "dd-MM-yy",
+                "d-MM-yy",
+            };
+
+            if (DateTime.TryParseExact(normalized, formats,
+                    CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+                return dt.ToString("dd-MMM-yyyy");
+
+            // Last resort: try general parse
+            if (DateTime.TryParse(raw, out var dt2))
+                return dt2.ToString("dd-MMM-yyyy");
+
+            return raw; // return as-is if cannot parse
+        }
+
+
+        private static string ReadDob(IXLWorksheet ws, int row, Dictionary<string, int> colMap)
+        {
+            if (!colMap.TryGetValue("D.O.B", out var col)) return "";
+
+            var cell = ws.Cell(row, col);
+            if (cell.IsEmpty()) return "";
+
+            // Best case: ClosedXML can give DateTime directly
+            if (cell.TryGetValue<DateTime>(out var dt))
+                return dt.ToString("dd-MMM-yyyy", CultureInfo.InvariantCulture);
+
+            // If Excel stores as serial number
+            if (cell.TryGetValue<double>(out var oa) && oa > 1 && oa < 60000)
+            {
+                try
+                {
+                    var dt2 = DateTime.FromOADate(oa);
+                    return dt2.ToString("dd-MMM-yyyy", CultureInfo.InvariantCulture);
+                }
+                catch { }
+            }
+
+            // Fallback: use formatted text (what you see in Excel)
+            var s = (cell.GetFormattedString() ?? "").Trim();
+            return NormalizeDob(s);
+        }
+
+        // ── Header row finder ────────────────────────────────────────────
+
         private static int FindHeaderRow(IXLWorksheet ws)
         {
             for (int r = 1; r <= Math.Min(10, ws.LastRowUsed()?.RowNumber() ?? 1); r++)
@@ -256,11 +397,13 @@ namespace MarriageBureau.ViewModels
                 for (int c = 1; c <= Math.Min(5, ws.LastColumnUsed()?.ColumnNumber() ?? 1); c++)
                 {
                     var val = ws.Cell(r, c).GetString().ToUpper().Trim();
-                    if (val == "NAME" || val == "S.NO.") return r;
+                    if (val == "NAME" || val == "S.NO." || val == "S.NO" || val == "S NO") return r;
                 }
             }
             return -1;
         }
+
+        // ── Column map builder ───────────────────────────────────────────
 
         private static Dictionary<string, int> BuildColumnMap(IXLWorksheet ws, int headerRow)
         {
@@ -272,12 +415,11 @@ namespace MarriageBureau.ViewModels
                 var header = ws.Cell(headerRow, c).GetString().ToUpper().Trim();
                 if (string.IsNullOrWhiteSpace(header)) continue;
 
-                // Normalise common variants
                 var key = header switch
                 {
-                    "PH NO.1" or "PHONE NUMBER 1" or "PH NO.1" => "PHONE1",
-                    "PH NO.2" or "PHONE NUMBER 2" or "PH NO.2" => "PHONE2",
-                    "NAME OF THE COMPANY & ADRESS" or "COMPANY NAME & ADDRESS" => "COMPANY",
+                    "PH NO.1" or "PHONE NUMBER 1" or "PH NO.1" or "PHONE 1" => "PHONE1",
+                    "PH NO.2" or "PHONE NUMBER 2" or "PH NO.2" or "PHONE 2" => "PHONE2",
+                    "NAME OF THE COMPANY & ADRESS" or "COMPANY NAME & ADDRESS" or "COMPANY" => "COMPANY",
                     "COMPLECTION" or "COMPLEXION" => "COMPLEXION",
                     "BIRTH STAR" or "NAKSHATRA" => "BIRTH STAR",
                     "PATERNAL GOTRAM" => "PATERNAL GOTRAM",
@@ -291,6 +433,9 @@ namespace MarriageBureau.ViewModels
                     "NO.OF SIBLINGS" => "SIBLINGS",
                     "REFERENCE NAME" or "REFERENCES" => "REFERENCES",
                     "REFERENCE PNONE" or "REFERENCE PHONE" => "REF PHONE",
+                    "S.NO." or "S.NO" or "S NO" or "SNO" => "S.NO.",
+                    "INT ID" or "INTID" or "INT_ID" => "INTID",
+                    "PROFILE ID" or "PROFILEID" or "TMID" => "PROFILE ID",
                     _ => header
                 };
 
@@ -306,7 +451,6 @@ namespace MarriageBureau.ViewModels
             var cell = ws.Cell(row, col);
             if (cell.IsEmpty()) return null;
 
-            // Handle TimeSpan cells (time of birth)
             if (cell.DataType == XLDataType.DateTime)
             {
                 try { return cell.GetDateTime().ToString("HH:mm"); } catch { }
@@ -317,11 +461,11 @@ namespace MarriageBureau.ViewModels
         private static string Clean(string? s) => string.IsNullOrWhiteSpace(s) ? string.Empty : s.Trim();
 
         private static Biodata BuildBiodata(IXLWorksheet ws, int row,
-                                            Dictionary<string, int> colMap, string sheetGender)
+                                            Dictionary<string, int> colMap, string sheetGender,
+                                            string intId, string parsedDob)
         {
             string G(string key) => Clean(GetCell(ws, row, colMap, key));
 
-            // Time of birth – handle cell stored as DateTime/TimeSpan
             string timeOfBirth = G("TIME OF BIRTH");
             if (string.IsNullOrWhiteSpace(timeOfBirth) && colMap.TryGetValue("TIME OF BIRTH", out int tc))
             {
@@ -334,7 +478,6 @@ namespace MarriageBureau.ViewModels
                             timeOfBirth = cell.GetDateTime().ToString("HH:mm");
                         else if (cell.DataType == XLDataType.Number)
                         {
-                            // Decimal fraction of a day
                             var ts = TimeSpan.FromDays(cell.GetDouble());
                             timeOfBirth = ts.ToString(@"hh\:mm");
                         }
@@ -349,12 +492,17 @@ namespace MarriageBureau.ViewModels
             if (string.IsNullOrWhiteSpace(gender)) gender = sheetGender;
             if (string.IsNullOrWhiteSpace(gender)) gender = "MALE";
 
+            // Prefer explicitly named PROFILE ID column, else leave empty
+            string profileId = G("PROFILE ID");
+
             return new Biodata
             {
+                IntId                   = intId,
+                ProfileId               = string.IsNullOrWhiteSpace(profileId) ? null : profileId,
                 Name                    = G("NAME"),
                 Caste                   = G("CASTE"),
                 Gender                  = gender.ToUpper(),
-                DateOfBirth             = G("D.O.B"),
+                DateOfBirth             = parsedDob,
                 TimeOfBirth             = timeOfBirth,
                 AmPm                    = G("AM/PM"),
                 PlaceOfBirth            = G("PLACE OF BIRTH"),
@@ -377,7 +525,7 @@ namespace MarriageBureau.ViewModels
                 BrotherCount            = G("BROTHER"),
                 BrotherOccupation       = G("OCCUPATION"),
                 SisterCount             = G("SISTER"),
-                SisterOccupation        = G("OCCUPATION"),  // same col reused
+                SisterOccupation        = G("OCCUPATION"),
                 BrotherInLaw            = G("BROTHER IN LAW"),
                 GrandFatherName         = G("GRANDFATHER"),
                 ElderFather             = G("UNCLE"),
@@ -411,28 +559,71 @@ namespace MarriageBureau.ViewModels
 
             try
             {
-                // Load existing names for duplicate detection
+                // Load existing records for duplicate detection
+                HashSet<string> existingIntIds;
                 HashSet<string> existingNames;
+                HashSet<string> existingPhones;
+                HashSet<string> existingIdentKeys;
+
                 using (var ctx = new AppDbContext())
                 {
-                    var names = await ctx.Biodatas.Select(b => b.Name.ToLower()).ToListAsync();
-                    existingNames = new HashSet<string>(names, StringComparer.OrdinalIgnoreCase);
+                    existingIntIds    = new HashSet<string>(
+                        ctx.Biodatas.Select(b => b.IntId).Where(x => x != null && x != "").ToList(),
+                        StringComparer.OrdinalIgnoreCase);
+                    existingNames     = new HashSet<string>(
+                        ctx.Biodatas.Select(b => b.Name.ToLower()).ToList(),
+                        StringComparer.OrdinalIgnoreCase);
+                    existingPhones    = new HashSet<string>(
+                        ctx.Biodatas.Where(b => b.Phone1 != null && b.Phone1 != "")
+                                    .Select(b => b.Phone1!).ToList(),
+                        StringComparer.OrdinalIgnoreCase);
+                    existingIdentKeys = new HashSet<string>(
+                        ctx.Biodatas.ToList()
+                           .Select(b => $"{b.Name.ToLower()}|{(b.FatherName ?? "").ToLower()}|{(b.Gender ?? "").ToLower()}"),
+                        StringComparer.OrdinalIgnoreCase);
                 }
 
                 foreach (var row in PreviewRows)
                 {
+                    // Skip rows that already have parse errors
+                    if (row.Status == "Error")
+                    {
+                        ErrorCount++;
+                        continue;
+                    }
+
                     if (row.ParsedBiodata == null)
                     {
-                        row.Status = "Error";
+                        row.Status       = "Error";
                         row.ErrorMessage = "No parsed data available.";
                         ErrorCount++;
                         continue;
                     }
 
-                    // Check for duplicate
-                    if (SkipDuplicates && existingNames.Contains(row.ParsedBiodata.Name))
+                    var dupErrors = new List<string>();
+
+                    // IntId duplicate check (DB)
+                    string intId = row.ParsedBiodata.IntId ?? "";
+                    if (!string.IsNullOrWhiteSpace(intId) && existingIntIds.Contains(intId))
+                        dupErrors.Add($"IntId '{intId}' already exists in database");
+
+                    if (string.IsNullOrWhiteSpace(intId))
+                        dupErrors.Add("IntId is empty");
+
+                    // Name+FatherName+Gender duplicate check (DB)
+                    string identKey = $"{row.ParsedBiodata.Name.ToLower()}|{(row.ParsedBiodata.FatherName ?? "").ToLower()}|{(row.ParsedBiodata.Gender ?? "").ToLower()}";
+                    if (SkipDuplicates && existingIdentKeys.Contains(identKey))
+                        dupErrors.Add("Duplicate Name+FatherName+Gender in database");
+
+                    // Phone duplicate check (DB)
+                    if (!string.IsNullOrWhiteSpace(row.ParsedBiodata.Phone1)
+                        && existingPhones.Contains(row.ParsedBiodata.Phone1))
+                        dupErrors.Add($"Phone '{row.ParsedBiodata.Phone1}' already exists in database");
+
+                    if (dupErrors.Count > 0)
                     {
-                        row.Status = "Skipped (duplicate)";
+                        row.Status       = "Skipped — " + string.Join("; ", dupErrors);
+                        row.ErrorMessage = string.Join("; ", dupErrors);
                         SkippedCount++;
                         continue;
                     }
@@ -440,26 +631,46 @@ namespace MarriageBureau.ViewModels
                     try
                     {
                         using var ctx = new AppDbContext();
-                        // Assign ProfileId if not already set
+
+                        // Assign ProfileId if not provided
                         if (string.IsNullOrWhiteSpace(row.ParsedBiodata.ProfileId))
                             row.ParsedBiodata.ProfileId = AppDbContext.GenerateNextProfileId(ctx);
+
                         ctx.Biodatas.Add(row.ParsedBiodata);
                         await ctx.SaveChangesAsync();
 
+                        existingIntIds.Add(intId);
                         existingNames.Add(row.ParsedBiodata.Name.ToLower());
+                        if (!string.IsNullOrWhiteSpace(row.ParsedBiodata.Phone1))
+                            existingPhones.Add(row.ParsedBiodata.Phone1);
+                        existingIdentKeys.Add(identKey);
+
                         row.Status = "Imported";
                         ImportedCount++;
                     }
                     catch (Exception ex)
                     {
-                        row.Status = "Error";
+                        row.Status       = "Error";
                         row.ErrorMessage = ex.Message;
                         ErrorCount++;
                     }
                 }
 
                 StatusMessage = $"Done! Imported: {ImportedCount}  |  Skipped: {SkippedCount}  |  Errors: {ErrorCount}";
+
+                // Show details of failed rows
+                //if (SkippedCount + ErrorCount > 0)
+                //{
+                //    var failedRows = PreviewRows
+                //        .Where(r => r.Status != "Imported" && r.Status != "Pending")
+                //        .Select(r => $"Row {r.RowNum} [{r.IntId}] {r.Name}: {r.ErrorMessage}")
+                //        .ToList();
+
+                //    StatusMessage += $"\n\nNot imported records:\n" + string.Join("\n", failedRows);
+                //}
+
                 OnPropertyChanged(nameof(PreviewRows));
+                CommandManager.InvalidateRequerySuggested();
             }
             catch (Exception ex)
             {
@@ -468,6 +679,122 @@ namespace MarriageBureau.ViewModels
             finally
             {
                 IsImporting = false;
+            }
+        }
+
+        // ── Export Errors to Excel ──────────────────────────────────────
+
+        private async Task ExportErrorsAsync()
+        {
+            var errorRows = PreviewRows
+                .Where(r => r.Status != "Imported" && r.Status != "Pending")
+                .ToList();
+
+            if (errorRows.Count == 0)
+            {
+                System.Windows.MessageBox.Show("No error/skipped rows to export.",
+                    "Export Errors", System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Information);
+                return;
+            }
+
+            var dlg = new Microsoft.Win32.SaveFileDialog
+            {
+                Title      = "Export Not-Imported Records",
+                Filter     = "Excel Workbook|*.xlsx",
+                FileName   = $"Import_Errors_{DateTime.Now:yyyyMMdd_HHmm}",
+                DefaultExt = ".xlsx"
+            };
+            if (dlg.ShowDialog() != true) return;
+
+            try
+            {
+                await Task.Run(() =>
+                {
+                    using var wb = new XLWorkbook();
+                    var ws = wb.Worksheets.Add("Not Imported");
+
+                    // Header
+                    var headers = new[] { "#", "IntId", "Name", "Gender", "D.O.B", "Caste",
+                                          "Height", "Qualification", "District", "Phone", "Status", "Reason" };
+                    for (int c = 1; c <= headers.Length; c++)
+                    {
+                        var cell = ws.Cell(1, c);
+                        cell.Value = headers[c - 1];
+                        cell.Style.Font.Bold         = true;
+                        cell.Style.Font.FontColor    = XLColor.White;
+                        cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#C62828");
+                        cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                    }
+
+                    for (int r = 0; r < errorRows.Count; r++)
+                    {
+                        var row = errorRows[r];
+                        int er  = r + 2;
+
+                        ws.Cell(er, 1).Value  = row.RowNum;
+                        ws.Cell(er, 2).Value  = row.IntId;
+                        ws.Cell(er, 3).Value  = row.Name;
+                        ws.Cell(er, 4).Value  = row.Gender;
+                        ws.Cell(er, 5).Value  = row.DateOfBirth;
+                        ws.Cell(er, 6).Value  = row.Caste;
+                        ws.Cell(er, 7).Value  = row.Height;
+                        ws.Cell(er, 8).Value  = row.Qualification;
+                        ws.Cell(er, 9).Value  = row.District;
+                        ws.Cell(er, 10).Value = row.Phone1;
+                        ws.Cell(er, 11).Value = row.Status;
+                        ws.Cell(er, 12).Value = row.ErrorMessage ?? "";
+
+                        // Highlight error rows red, skipped rows orange
+                        var rowColor = row.Status.StartsWith("Skipped")
+                            ? XLColor.FromHtml("#FFF3E0")
+                            : XLColor.FromHtml("#FFEBEE");
+                        ws.Row(er).Style.Fill.BackgroundColor = rowColor;
+
+                        // Mark the reason cell bold-red
+                        ws.Cell(er, 12).Style.Font.Bold      = true;
+                        ws.Cell(er, 12).Style.Font.FontColor = XLColor.FromHtml("#C62828");
+
+                        for (int c = 1; c <= headers.Length; c++)
+                            ws.Cell(er, c).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                    }
+
+                    ws.Columns().AdjustToContents();
+                    foreach (var c in ws.ColumnsUsed())
+                    {
+                        if (c.Width > 50) c.Width = 50;
+                        if (c.Width < 8)  c.Width = 8;
+                    }
+
+                    if (errorRows.Count > 0)
+                        ws.RangeUsed()?.SetAutoFilter();
+
+                    wb.SaveAs(dlg.FileName);
+                });
+
+                var open = System.Windows.MessageBox.Show(
+                    $"Exported {errorRows.Count} not-imported record(s) to:\n{dlg.FileName}\n\nOpen the file now?",
+                    "Export Successful",
+                    System.Windows.MessageBoxButton.YesNo,
+                    System.Windows.MessageBoxImage.Information);
+
+                if (open == System.Windows.MessageBoxResult.Yes)
+                {
+                    try
+                    {
+                        System.Diagnostics.Process.Start(
+                            new System.Diagnostics.ProcessStartInfo(dlg.FileName) { UseShellExecute = true });
+                    }
+                    catch { }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Export failed:\n{ex.Message}",
+                    "Export Error",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Error);
             }
         }
 

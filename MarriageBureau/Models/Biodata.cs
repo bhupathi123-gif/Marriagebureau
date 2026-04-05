@@ -22,6 +22,14 @@ namespace MarriageBureau.Models
         public int Id { get; set; }
 
         /// <summary>
+        /// Matrimony Internal ID — user-supplied unique reference (e.g. F1, F2, M1, M2).
+        /// Mandatory; must be unique across all profiles.
+        /// Maps to the S.NO. column in import Excel.
+        /// </summary>
+        [Required]
+        public string IntId { get; set; } = string.Empty;
+
+        /// <summary>
         /// Human-readable profile identifier, e.g. "TS001".
         /// Generated on first save as: prefix (from App.config "ProfileIdPrefix") + sequential number.
         /// </summary>

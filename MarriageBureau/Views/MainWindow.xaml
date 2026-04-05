@@ -99,6 +99,15 @@
                     </StackPanel>
                 </Button>
 
+                <!--<Button x:Name="BtnImportPhotos"
+                        Command="{Binding NavigatePhotoImportCommand}"
+                        Style="{StaticResource NavButtonStyle}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="ImageMultiple" Width="20" Height="20" Margin="0,0,12,0"/>
+                        <TextBlock Text="Import Photos" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>-->
+
                 <Button x:Name="BtnExport"
                         Command="{Binding NavigateExportCommand}"
                         Style="{StaticResource NavButtonStyle}">

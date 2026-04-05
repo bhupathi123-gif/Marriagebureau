@@ -170,6 +170,9 @@ namespace MarriageBureau.Converters
                 if (status.StartsWith("Error", StringComparison.OrdinalIgnoreCase))
                     return new System.Windows.Media.SolidColorBrush(
                         System.Windows.Media.Color.FromRgb(0xC6, 0x28, 0x28));   // red
+                if (status.StartsWith("No Photos", StringComparison.OrdinalIgnoreCase))
+                    return new System.Windows.Media.SolidColorBrush(
+                        System.Windows.Media.Color.FromRgb(0xE6, 0x51, 0x00));   // orange
             }
             // Pending
             return new System.Windows.Media.SolidColorBrush(
