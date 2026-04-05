@@ -285,11 +285,37 @@
                     </Grid>
 
                     <StackPanel Margin="0,12,0,0">
-                        <TextBlock Text="Company Name &amp; Address" Style="{StaticResource FormLabel}"/>
-                        <TextBox Text="{Binding Biodata.CompanyAddress, UpdateSourceTrigger=PropertyChanged}"
-                                 materialDesign:HintAssist.Hint="Company name and full address"
+                        <TextBlock Text="Designation Details (Name &amp; Place of Work)" Style="{StaticResource FormLabel}"/>
+                        <TextBox Text="{Binding Biodata.DesignationDetails, UpdateSourceTrigger=PropertyChanged}"
+                                 materialDesign:HintAssist.Hint="e.g. CAPGEMINI PVT.LTD. HYDERABAD"
                                  Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
                     </StackPanel>
+
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="Income (Annual)" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.Income, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="e.g. 12 LPA"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                            <TextBlock Text="Asset Value" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.AssetValue, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="e.g. 50 Lakhs"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Gift / Dowry" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.Gift, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="e.g. Gold, Property"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                    </Grid>
 
                     <!-- ── Family Information ─────────────────────── -->
                     <TextBlock Text="👨‍👩‍👧  Family Information" Style="{StaticResource SectionHeader}"/>
@@ -370,6 +396,28 @@
                             <TextBox Text="{Binding Biodata.BrotherInLaw, UpdateSourceTrigger=PropertyChanged}"
                                      materialDesign:HintAssist.Hint="Name"
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Brother/Sister Details -->
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="Brother Details" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.BrotherDetails, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Brother names and occupations"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     AcceptsReturn="True" MinHeight="50" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Sister Details" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.SisterDetails, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Sister names and occupations"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     AcceptsReturn="True" MinHeight="50" TextWrapping="Wrap"/>
                         </StackPanel>
                     </Grid>
 
@@ -492,13 +540,24 @@
                         </StackPanel>
                     </Grid>
 
-                    <StackPanel Margin="0,12,0,0">
-                        <TextBlock Text="References" Style="{StaticResource FormLabel}"/>
-                        <TextBox Text="{Binding Biodata.References, UpdateSourceTrigger=PropertyChanged}"
-                                 materialDesign:HintAssist.Hint="Reference name and phone"
-                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                 AcceptsReturn="True" MinHeight="60" TextWrapping="Wrap"/>
-                    </StackPanel>
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="Reference Name" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.References, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Reference person name"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Reference Phone" Style="{StaticResource FormLabel}"/>
+                            <TextBox Text="{Binding Biodata.ReferencePhone, UpdateSourceTrigger=PropertyChanged}"
+                                     materialDesign:HintAssist.Hint="Reference phone number"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        </StackPanel>
+                    </Grid>
 
                     <!-- ── Partner Expectations ───────────────────── -->
                     <TextBlock Text="💝  Expectations from Partner" Style="{StaticResource SectionHeader}"/>
@@ -506,6 +565,15 @@
 
                     <TextBox Text="{Binding Biodata.ExpectationsFromPartner, UpdateSourceTrigger=PropertyChanged}"
                              materialDesign:HintAssist.Hint="Describe expectations from life partner (location, education, occupation, etc.)"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             AcceptsReturn="True" MinHeight="80" TextWrapping="Wrap"/>
+
+                    <!-- ── Preferences ────────────────────────────── -->
+                    <TextBlock Text="⭐  Preferences" Style="{StaticResource SectionHeader}"/>
+                    <Separator Margin="0,0,0,14"/>
+
+                    <TextBox Text="{Binding Biodata.Preferences, UpdateSourceTrigger=PropertyChanged}"
+                             materialDesign:HintAssist.Hint="Candidate preferences (caste, location, qualification, etc.)"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              AcceptsReturn="True" MinHeight="80" TextWrapping="Wrap"
                              Margin="0,0,0,24"/>
