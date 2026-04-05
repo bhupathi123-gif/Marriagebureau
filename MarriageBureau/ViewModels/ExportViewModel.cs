@@ -230,11 +230,17 @@ namespace MarriageBureau.ViewModels
             var ext  = asImage ? ".jpg" : ".pdf";
             var desc = asImage ? "JPEG Image|*.jpg" : "PDF Document|*.pdf";
 
+            // Build filename: {IntId}_{Name}_{Date}
+            var intIdPart = !string.IsNullOrWhiteSpace(SelectedProfile.IntId)
+                ? SelectedProfile.IntId.Trim() + "_"
+                : string.Empty;
+            var namePart = SelectedProfile.Name.Replace(" ", "_");
+
             var dlg = new Microsoft.Win32.SaveFileDialog
             {
                 Title            = asImage ? "Save as Image" : "Save as PDF",
                 Filter           = desc,
-                FileName         = $"Biodata_{SelectedProfile.Name.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd}",
+                FileName         = $"{intIdPart}{namePart}_{DateTime.Now:yyyyMMdd}",
                 DefaultExt       = ext
             };
             if (dlg.ShowDialog() != true) return;

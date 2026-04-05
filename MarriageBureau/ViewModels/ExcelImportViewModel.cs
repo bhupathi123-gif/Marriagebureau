@@ -436,6 +436,14 @@ namespace MarriageBureau.ViewModels
                     "S.NO." or "S.NO" or "S NO" or "SNO" => "S.NO.",
                     "INT ID" or "INTID" or "INT_ID" => "INTID",
                     "PROFILE ID" or "PROFILEID" or "TMID" => "PROFILE ID",
+                    // New columns from Excel template
+                    "INCOME" => "INCOME",
+                    "ASSET VALUE" => "ASSET VALUE",
+                    "GIFT" => "GIFT",
+                    "DESIGNATION DETAILS (NAME & PLACE)" or "DESIGNATION DETAILS" => "DESIGNATION DETAILS",
+                    "BROTHER DETAILS" => "BROTHER DETAILS",
+                    "SISTER DETAILS" => "SISTER DETAILS",
+                    "PREFERENCES" => "PREFERENCES",
                     _ => header
                 };
 
@@ -516,7 +524,11 @@ namespace MarriageBureau.ViewModels
                 MaternalGotram          = G("MATERNAL GOTRAM"),
                 Qualification           = G("QUALIFICATION"),
                 Designation             = G("DESIGNATION"),
+                DesignationDetails      = G("DESIGNATION DETAILS"),
                 CompanyAddress          = G("COMPANY"),
+                Income                  = G("INCOME"),
+                AssetValue              = G("ASSET VALUE"),
+                Gift                    = G("GIFT"),
                 FatherName              = G("FATHER NAME"),
                 FatherOccupation        = G("FATHER OCCUPATION"),
                 MotherName              = G("MOTHER NAME"),
@@ -524,8 +536,10 @@ namespace MarriageBureau.ViewModels
                 NoOfSiblings            = G("SIBLINGS"),
                 BrotherCount            = G("BROTHER"),
                 BrotherOccupation       = G("OCCUPATION"),
+                BrotherDetails          = G("BROTHER DETAILS"),
                 SisterCount             = G("SISTER"),
                 SisterOccupation        = G("OCCUPATION"),
+                SisterDetails           = G("SISTER DETAILS"),
                 BrotherInLaw            = G("BROTHER IN LAW"),
                 GrandFatherName         = G("GRANDFATHER"),
                 ElderFather             = G("UNCLE"),
@@ -541,7 +555,9 @@ namespace MarriageBureau.ViewModels
                 Phone1                  = G("PHONE1"),
                 Phone2                  = G("PHONE2"),
                 References              = G("REFERENCES"),
+                ReferencePhone          = G("REF PHONE"),
                 ExpectationsFromPartner = G("EXPECTATIONS"),
+                Preferences             = G("PREFERENCES"),
                 CreatedAt               = DateTime.Now,
                 UpdatedAt               = DateTime.Now,
             };

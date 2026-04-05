@@ -421,6 +421,8 @@ namespace MarriageBureau.Services
                 new[] { p.DoorNumber, p.AddressLine, p.TownVillage, p.District, p.State, p.PinCode }
                 .Where(s => !string.IsNullOrWhiteSpace(s)));
 
+            // NOTE: Income, AssetValue, Gift and Preferences are intentionally
+            // EXCLUDED from PDF/Image export (they are exported to Excel only).
             return new List<Section>
             {
                 new("Personal Information", new List<FieldEntry>
@@ -442,9 +444,10 @@ namespace MarriageBureau.Services
                 }),
                 new("Education & Career", new List<FieldEntry>
                 {
-                    new("Qualification",     p.Qualification  ?? ""),
-                    new("Designation",       p.Designation    ?? ""),
-                    new("Company / Address", p.CompanyAddress ?? ""),
+                    new("Qualification",          p.Qualification     ?? ""),
+                    new("Designation",            p.Designation       ?? ""),
+                    new("Designation Details",    p.DesignationDetails ?? ""),
+                    new("Company / Address",      p.CompanyAddress    ?? ""),
                 }),
                 new("Family Information", new List<FieldEntry>
                 {
@@ -454,18 +457,21 @@ namespace MarriageBureau.Services
                     new("Mother's Occupation", p.MotherOccupation ?? ""),
                     new("Brothers",            p.BrotherCount     ?? ""),
                     new("Brother's Name",      p.BrotherOccupation ?? ""),
+                    new("Brother Details",     p.BrotherDetails   ?? ""),
                     new("Sisters",             p.SisterCount      ?? ""),
                     new("Sister's Name",       p.SisterOccupation ?? ""),
+                    new("Sister Details",      p.SisterDetails    ?? ""),
                     new("Grand Father",        p.GrandFatherName  ?? ""),
-                    new("Uncle",        p.ElderFather      ?? ""),
+                    new("Uncle",               p.ElderFather      ?? ""),
                 }),
                 new("Address & Contact", new List<FieldEntry>
                 {
-                    new("Address",    addr),
-                    new("Living In",  p.LivingIn  ?? ""),
-                    new("Phone 1",    p.Phone1    ?? ""),
-                    new("Phone 2",    p.Phone2    ?? ""),
-                    new("References", p.References ?? ""),
+                    new("Address",          addr),
+                    new("Living In",        p.LivingIn       ?? ""),
+                    new("Phone 1",          p.Phone1         ?? ""),
+                    new("Phone 2",          p.Phone2         ?? ""),
+                    new("Reference Name",   p.References     ?? ""),
+                    new("Reference Phone",  p.ReferencePhone ?? ""),
                 }),
             };
         }

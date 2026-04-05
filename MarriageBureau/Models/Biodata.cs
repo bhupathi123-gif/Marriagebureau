@@ -62,7 +62,11 @@ namespace MarriageBureau.Models
         // ─── Education & Career ───────────────────────────────────────────
         public string? Qualification { get; set; }
         public string? Designation { get; set; }
+        public string? DesignationDetails { get; set; }   // Designation Details (Name & Place)
         public string? CompanyAddress { get; set; }
+        public string? Income { get; set; }               // Annual Income
+        public string? AssetValue { get; set; }           // Asset Value
+        public string? Gift { get; set; }                 // Gift / Dowry
 
         // ─── Family ───────────────────────────────────────────────────────
         public string? FatherName { get; set; }
@@ -72,8 +76,10 @@ namespace MarriageBureau.Models
         public string? NoOfSiblings { get; set; }
         public string? BrotherCount { get; set; }
         public string? BrotherOccupation { get; set; }
+        public string? BrotherDetails { get; set; }       // Brother Details (names/occupations)
         public string? SisterCount { get; set; }
         public string? SisterOccupation { get; set; }
+        public string? SisterDetails { get; set; }        // Sister Details (names/occupations)
         public string? BrotherInLaw { get; set; }
         public string? GrandFatherName { get; set; }
         public string? ElderFather { get; set; }
@@ -93,9 +99,11 @@ namespace MarriageBureau.Models
         public string? Phone1 { get; set; }
         public string? Phone2 { get; set; }
         public string? References { get; set; }
+        public string? ReferencePhone { get; set; }       // Reference Phone number
 
         // ─── Partner Expectations ─────────────────────────────────────────
         public string? ExpectationsFromPartner { get; set; }
+        public string? Preferences { get; set; }          // Candidate Preferences
 
         // ─── Profile Status ───────────────────────────────────────────────
         /// <summary>Current lifecycle status of the profile (Active / Inactive / Married / Engaged / OnHold / Closed)</summary>

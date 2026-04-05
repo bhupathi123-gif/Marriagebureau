@@ -157,7 +157,18 @@ namespace MarriageBureau.Data
                 @"ALTER TABLE Biodatas ADD COLUMN IntId TEXT NOT NULL DEFAULT ''",
 
                 // v6b: unique index on IntId (non-empty rows only enforced in app logic)
-                @"CREATE UNIQUE INDEX IF NOT EXISTS IX_Biodatas_IntId ON Biodatas(IntId) WHERE IntId != ''"
+                @"CREATE UNIQUE INDEX IF NOT EXISTS IX_Biodatas_IntId ON Biodatas(IntId) WHERE IntId != ''",
+
+                // v7: New columns from Excel template — Income, AssetValue, Gift, DesignationDetails,
+                //     BrotherDetails, SisterDetails, ReferencePhone, Preferences
+                @"ALTER TABLE Biodatas ADD COLUMN Income TEXT",
+                @"ALTER TABLE Biodatas ADD COLUMN AssetValue TEXT",
+                @"ALTER TABLE Biodatas ADD COLUMN Gift TEXT",
+                @"ALTER TABLE Biodatas ADD COLUMN DesignationDetails TEXT",
+                @"ALTER TABLE Biodatas ADD COLUMN BrotherDetails TEXT",
+                @"ALTER TABLE Biodatas ADD COLUMN SisterDetails TEXT",
+                @"ALTER TABLE Biodatas ADD COLUMN ReferencePhone TEXT",
+                @"ALTER TABLE Biodatas ADD COLUMN Preferences TEXT"
             };
 
             foreach (var sql in migrations)
